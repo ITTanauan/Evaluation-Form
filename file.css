@@ -1,0 +1,219 @@
+questions_by_category = {
+    "About the Topic": [
+        {"id": 1, "assessment_text": "The topic was relevant and interesting."},
+        {"id": 2, "assessment_text": "The topic was clearly explained."},
+    ],
+    "About the Materials": [
+        {"id": 3, "assessment_text": "The materials were useful."},
+        {"id": 4, "assessment_text": "The materials were easy to understand."},
+    ],
+    "About the Facilitators": [
+        {"id": 5, "assessment_text": "The facilitators were knowledgeable."},
+        {"id": 6, "assessment_text": "The facilitators were engaging."},
+    ],
+    "About the Food and Venue": [
+        {"id": 7, "assessment_text": "The food provided was satisfactory."},
+        {"id": 8, "assessment_text": "The venue was comfortable."},
+    ],
+    "About Save the Children Staff Support": [
+        {"id": 9, "assessment_text": "The Save the Children staff were helpful."},
+        {"id": 10, "assessment_text": "The support from Save the Children was sufficient."},
+    ]
+}    
+
+
+
+<form method="POST" action="{{ url_for('assessment_questions') }}">
+    {% for category, questions in questions_by_category.items() %}
+        <div class="category">
+            <div class="header-category"> 
+                <h3>{{ category }}</h3>
+                <h3 style="margin-right:120px;">Rating</h3>
+            </div>
+            {% for question in questions %} 
+                <div class="question">  
+                    <div class="question-text">
+                        <label>{{ question.assessment_text }}</label>
+                    </div>
+                    <div class="options">
+                        <label><input type="radio" name="q{{ question.id }}" value="0" required> 0</label>
+                        <label><input type="radio" name="q{{ question.id }}" value="1"> 1</label>
+                        <label><input type="radio" name="q{{ question.id }}" value="2"> 2</label>
+                        <label><input type="radio" name="q{{ question.id }}" value="3"> 3</label>
+                    </div>
+                </div>
+                <textarea id="comment" name="comment{{ question.id }}" placeholder="Add your comment..."></textarea>
+            {% endfor %}
+        </div>
+    {% endfor %}
+
+    <div class="buttons">
+        <button type="submit" class="submit-btn">Submit</button>
+    </div>
+</form>
+
+
+.category {
+    margin-bottom: 20px;
+}
+
+.header-category {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.question {
+    margin-bottom: 10px;
+}
+
+.options label {
+    margin-right: 10px;
+}
+
+textarea {
+    width: 100%;
+    margin-top: 5px;
+    padding: 5px;
+}
+
+.buttons {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.submit-btn {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+<i class="fa-solid fa-user-tie"></i>
+
+
+
+
+<!-- Flex container for side-by-side charts -->
+<div style="
+    display: flex; 
+    justify-content: center; 
+    align-items: flex-start;
+    gap: 20px; 
+    max-width: 1200px; 
+    margin: auto;
+    padding: 0 30px;
+">
+
+    <!-- Age Group Chart -->
+    <div class="overview bg-white p-20 rad-10" style="
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    gap: 15px; 
+    padding: 20px; 
+    border-radius: 10px; 
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
+    background: #fff;
+    width: 50%;
+    min-width: 500px;
+    
+">
+    <h2 style="font-size: 22px; color: #333; font-weight: bold; margin-bottom: 10px;">
+      About The Topic/s
+    </h2>
+    <div style="width: 100%; height: 400px; padding: 15px;">
+        <canvas id="agegroupchart"></canvas>
+    </div>
+</div>
+
+
+    <!-- Yes and No Chart -->
+    <div class="overview bg-white p-20 rad-10" style="
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        gap: 15px; 
+        padding: 20px; 
+        border-radius: 10px; 
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
+        background: #fff;
+        width: 50%;
+        min-width: 500px;
+        
+    ">
+        <h2 style="font-size: 22px; color: #333; font-weight: bold; margin-bottom: 10px;">
+            About The Materials
+        </h2>
+        
+        <div style="width: 100%; height: 400px; padding: 15px;">
+            <canvas id="yesnochart" width="800" height="700"></canvas>
+        </div>
+    </div>
+
+    
+
+</div>
+
+
+ <!-- Flex container for side-by-side charts -->
+ <div style="
+ display: flex; 
+ justify-content: center; 
+ align-items: flex-start;
+ gap: 20px; 
+ max-width: 1200px; 
+ margin: auto;
+ padding: 0 40px;
+ margin-top: 30px
+">
+<!-- Yes and No Chart -->
+<div class="overview bg-white p-20 rad-10" style="
+display: flex; 
+flex-direction: column; 
+align-items: center; 
+gap: 15px; 
+padding: 20px; 
+border-radius: 10px; 
+box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
+background: #fff;
+width: 50%;
+min-width: 500px;
+
+">
+<h2 style="font-size: 22px; color: #333; font-weight: bold; margin-bottom: 10px;">
+  Yes and No Frequency
+</h2>
+
+<div style="width: 100%; height: 400px; padding: 15px;">
+  <canvas id="yesnochart"></canvas>
+</div>
+</div>
+
+
+ <!-- Yes and No Chart -->
+ <div class="overview bg-white p-20 rad-10" style="
+     display: flex; 
+     flex-direction: column; 
+     align-items: center; 
+     gap: 15px; 
+     padding: 20px; 
+     border-radius: 10px; 
+     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
+     background: #fff;
+     width: 50%;
+     min-width: 500px;
+     margin-bottom: 40px;
+ ">
+     <h2 style="font-size: 22px; color: #333; font-weight: bold; margin-bottom: 10px;">
+         Yes and No Frequency
+     </h2>
+     
+     <div style="width: 100%; height: 400px; padding: 15px;">
+        <canvas id="yesNoChart"></canvas>
+     </div>
+ </div>
+
+</div>

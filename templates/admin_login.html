@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+</head>
+<body>
+    <div class="container">  
+
+        <div class="back-btn">
+            <button onclick="window.location.href='{{ url_for('home') }}'">
+                <i class="fas fa-arrow-left"></i>
+            </button>       
+        </div>
+        
+        <h2>Admin Login</h2>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('admin_login') }}">
+            <input type="text" name="username" placeholder="Username" required>
+            <div class="input-box">
+                <input id="password" type="password" name="password" placeholder="Password" required>
+                <img src="{{ url_for('static', filename='images/eye-close.png') }}" id="eyeicon">
+            </div>
+            <button type="submit">Login</button>
+        </form>
+
+        <p style="margin-top: 20px;">Don't have an account? <a href="{{ url_for('admin_signup') }}">Sign up here</a></p>
+
+        <script>
+            let eyeicon = document.getElementById("eyeicon");
+            let password = document.getElementById("password");
+
+            eyeicon.onclick = function(){
+                if (password.type == "password"){
+                    password.type = "text" ;
+                    this.src = "{{ url_for('static', filename='images/eye-open.png') }}";
+                } else {
+                    password.type ="password";
+                    this.src = "{{ url_for('static', filename='images/eye-close.png') }}"
+                }
+            }
+        </script>
+       
+    </div>
+</body>
+</html>

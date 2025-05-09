@@ -1,0 +1,105 @@
+/* General Styles */
+body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(to bottom,  #fdd4d4,#ffffff);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column; /* Ensures elements stack vertically */
+    height: 100vh;
+    margin: 0;
+    text-align: center;
+    padding: 10px;
+}
+
+html, body {
+    overflow: hidden; /* Prevent scrolling */
+    height: 100vh; /* Ensure full viewport height */
+    margin: 0;
+    padding: 0;
+}
+
+
+.logo { 
+    width: 30vh; /* Adjust size as needed */
+    height: auto;
+    margin-bottom: 10px;
+    margin-top:0px;
+}
+
+.logo-container {
+    display: flex;
+    gap: 10px; 
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* Container */
+.container {
+    background: rgba(255, 255, 255);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    width: 40vw;
+    max-width: 350px; /* Prevents excessive stretching */
+    min-width: 280px;
+    transition: transform 0.3s ease-in-out;
+    margin-top: 10px;
+}
+
+/* Heading */
+h2 {
+    color: #333;
+    font-weight: 600;
+    font-size: 22px;
+    margin-top:4px;
+    margin: 0;
+}
+
+/* Paragraph */
+p {
+    color: #555;
+    font-size: 15px;
+    margin-bottom: 20px;
+}
+
+/* Buttons */
+.buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 30px;
+}
+
+.btn {
+    background: linear-gradient(to right,  #3e8e40,#48c432);
+    color: white;
+    text-decoration: none;
+    padding: 9px;
+    font-size: 16px;
+    border-radius: 6px;
+    display: block;
+    transition: all 0.3s ease;
+    border-radius: 20px;
+}
+
+.btn:hover {
+    background: #3e8e41;
+    transform: scale(1.02);
+}
+
+
+/* Responsive Design */
+@media (max-width: 460px) {
+    .container {
+        width: 80%;
+        padding: 30px;
+    }
+    .logolarger{
+        margin-top: 10px;
+        width: 90%;
+        justify-content: center;
+        align-items: center;
+        margin-left: 10px;
+    }
+}

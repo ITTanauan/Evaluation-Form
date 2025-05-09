@@ -1,0 +1,12 @@
+<form method="POST" action="{{ url_for('manage_questions') }}">
+    {% for question in questions %}
+    <div>
+        <label>Question:</label>
+        <input type="text" name="question_text" value="{{ question.question_text }}">
+        <label>Translation:</label>
+        <input type="text" name="translation" value="{{ question.translation }}">
+        <input type="hidden" name="question_id" value="{{ question.id }}">
+        <button type="submit">Save</button>
+    </div>
+    {% endfor %}
+</form>

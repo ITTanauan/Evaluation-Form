@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Participant's Response</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/all.min.css') }}">
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;500&amp;display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='framework.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='view.css') }}">
+</head>
+
+<body>
+    <div class="page d-flex">
+        <div class="sidebar bg-white p-20 p-relative">
+            <ul>
+                <li>
+                    <a href="{{ url_for('admin_dashboard') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                        <i class="fa-solid fa-house"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin_list') }}" class="active d-flex align-items-center font-14 p-10 rad-6 color-black">
+                        <i class="fa-solid fa-people-group"></i>
+                        <span>Activity</span>
+                    </a>
+                </li>
+               
+                <li>
+                    <a href="{{ url_for('admin_results')}}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                        <i class="fa-solid fa-square-poll-vertical"></i>
+                        <span>Results</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin_settings') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                        <i class="fa fa-gears"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>                
+                
+            </ul>
+        </div>
+        <div class="content w-full">
+            <!-- Start Header -->
+            <div class="header bg-white p-14 between-flex" style="border-radius: 20px;padding: 10px;">
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='images/STC_logo.png') }}" alt="Logo 2" class="logo">
+                </div>
+                <div class="search-container">
+                    <input id="searchInput" class="search-box" type="search" placeholder="Search ">
+                    <i class="fas fa-search search-icon"></i>
+                    <div id="searchResults" class="search-results"></div>
+                </div>
+                <div class="user d-flex align-items-center">
+                                
+            
+                    <!-- User Info -->
+                    <div class="user-info d-flex align-items-center">
+                        <div class="user-img" id="userDropdownToggle">
+                            <img src="{{ admin.profile_image}}"  alt="User">
+                        </div>
+                    </div>
+
+                    <!-- Dropdown Menu -->
+                    <div id="userDropdown" class="dropdown-menu">
+                        <ul>
+                            <li>
+                                <a href="{{ url_for('admin_profile') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                                    <i class="fas fa-user fa-fw"></i>
+                                    <span>Profile</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('admin_logout') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                                    <i class="fas fa-sign-out-alt fa-fw"></i>
+                                    <span>Logout</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                </div>
+            </div>
+            <!-- End Header -->
+            
+            <div class="participants-table bg-white rad-10 m-10 p-20">
+                <h2 class="m-0 mb-20"> 
+                    <i class="fa-solid fa-comments" style="margin:0px 10px 0px;"></i> {{ participant.name }}'s Response</h2>
+                <div class="responsive-table">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Assessment #</th>
+                                <th>Question</th>
+                                <th>Response</th>
+                                <th>Category</th>
+                                <th>Comment</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for response in responses %}
+                            <tr>
+                                <td>{{ response.assessment_number }}</td>
+                                <td style="text-align: left;">{{ response.assessment_text }}</td>
+                                <td>{{ response.response }} </td>
+                                <td style="text-align: left;">{{ response.category }}</td>
+                                <td style="text-align: left;">{{ response.comment }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="participants-table bg-white rad-10 m-10 p-20">
+                <h2 class="m-0 mb-20">
+                    <i class="fa-solid fa-comments" style="margin:0px 10px 0px;"></i> {{ participant.name }}'s Additional Questions & Responses
+                </h2>
+                <div class="responsive-table">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Additional Question</th>
+                                <th>Comment Response</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in additional_responses %}
+                            <tr>
+                                <td style="text-align: left;">{{ item.additional_question }}</td>
+                                <td style="text-align: left;">
+                                    {% if item.comment_response and item.comment_response.strip() %}
+                                        {{ item.comment_response }}
+                                    {% else %}
+                                        No response yet.
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+        <script src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const userDropdownToggle = document.getElementById("userDropdownToggle");
+                const userDropdown = document.getElementById("userDropdown");
+            
+                userDropdownToggle.addEventListener("click", function (event) {
+                    event.stopPropagation();
+                    userDropdown.classList.toggle("show");
+                });
+            
+                // Close dropdown if clicking outside
+                document.addEventListener("click", function (event) {
+                    if (!userDropdown.contains(event.target) && !userDropdownToggle.contains(event.target)) {
+                        userDropdown.classList.remove("show");
+                    }
+                });
+            });
+            
+        </script>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+    function exportToPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        doc.setFontSize(14);
+        doc.text("Summary", 105, 10, null, null, "center");
+
+        let y = 20;
+        document.querySelectorAll("#summaryTable tbody tr").forEach(row => {
+            let question = row.cells[0].innerText;
+            let answer = row.cells[1].innerText;
+            doc.text(`${question}: ${answer}`, 10, y);
+            y += 10;
+        });
+
+        doc.save("summary.pdf");
+    }
+
+    function printSummary() {
+        const printContent = document.getElementById("summaryTable").outerHTML;
+        const newWindow = window.open("", "", "width=800,height=600");
+        newWindow.document.write("<html><head><title>Print Summary</title></head><body>");
+        newWindow.document.write(printContent);
+        newWindow.document.write("</body></html>");
+        newWindow.document.close();
+        newWindow.print();
+    }
+</script>
+<script>
+    document.getElementById("searchInput").addEventListener("input", async function () {
+    let query = this.value.trim();
+    let searchResults = document.getElementById("searchResults");
+
+    if (query === "") {
+        searchResults.style.display = "none";
+        return;
+    }
+
+    try {
+        let response = await fetch(`/search_participant?q=${encodeURIComponent(query)}`);
+        let data = await response.json();
+
+        searchResults.innerHTML = "";
+        if (data.length === 0) {
+            searchResults.innerHTML = "<div>No results found</div>";
+        } else {
+            data.forEach(participant => {
+                let div = document.createElement("div");
+                div.classList.add("search-result");
+                div.innerHTML = `<strong>${participant.name}</strong> - ${participant.activity_name} <br>
+                                <small>${participant.venue}, ${participant.school}</small>`;
+                div.onclick = () => window.location.href = `/view-participant/${participant.id}`;
+                searchResults.appendChild(div);
+            });
+        }
+        searchResults.style.display = "block";
+    } catch (error) {
+        console.error("Error fetching search results:", error);
+    }
+});
+
+// Hide results when clicking outside
+document.addEventListener("click", function (e) {
+    let searchBox = document.getElementById("searchInput");
+    let searchResults = document.getElementById("searchResults");
+
+    if (!searchBox.contains(e.target) && !searchResults.contains(e.target)) {
+        searchResults.style.display = "none";
+    }
+});  
+</script>
+
+</body>
+</html>

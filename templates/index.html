@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Assessment Portal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+            <div class="logo-container">
+                <img src="{{ url_for('static', filename='images/STC_logo.png') }}" alt="Logo 2" class="logo">
+            </div>
+        <h2>Evaluation and Feedback</h2>
+        <p>Select an option to proceed</p>
+        
+        <div class="buttons">
+            <a href="{{ url_for('participant') }}" class="btn">Take Assessment</a>
+            <a href="{{ url_for('admin_login') }}" class="btn">Admin Login</a>
+        </div>
+    </div>  
+</body>
+</html>

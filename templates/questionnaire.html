@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessment Questions</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='question.css') }}">
+</head>
+<body>   
+    <div class="container">
+
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='images/STC_Logo.png') }}" alt="Logo 2" class="logo">
+        </div>
+
+        <h2>Evaluation and Feedback Form</h2>
+        <p>In order for us to improve future Save the Children activities, please truthfully answer the following questions based on your observations and experience.
+            <span style=" gap:10px;">
+                Using the scale of 1 to 3 where
+                <span>
+                    <b>1</b> is <b>DISAGREE,</b>
+                    <b>2</b> is <b>NEUTRAL,</b> and
+                    <b>3</b> is <b>AGREE</b>
+                    Kindly click the circle beside the number that best corresponds to your feedback and add comments as needed.
+                </span>
+            </span>
+            <span>Please click zero <b>"0" if NOT Applicable.</b></span>
+        </p>
+    
+        <form method="POST" action="{{ url_for('assessment_questions') }}">
+            {% for category, questions in questions_by_category.items() %}
+                <div class="category">
+                    <div class="header-category"> 
+                        <h3 class="category-name">{{ category }}</h3>
+                        <h3 class="rating" style="margin-right:100px;">Rating</h3>
+                    </div>
+                    {% for question in questions %} 
+                        <div class="question" >  
+                            <div class="question-text">
+                                <label>{{ question.assessment_text }}</label>
+                            </div>
+                            <div class="options">
+                                <label><input type="radio" name="q{{ question.id }}" value="0" required> 0</label>
+                                <label><input type="radio" name="q{{ question.id }}" value="1"> 1</label>
+                                <label><input type="radio" name="q{{ question.id }}" value="2"> 2</label>
+                                <label><input type="radio" name="q{{ question.id }}" value="3"> 3</label>
+                            </div>
+                        </div>
+                        <textarea id="comment" name="comment{{ question.id }}" placeholder="Add your comment..."></textarea>
+                        <div class="border-line"></div>
+                    {% endfor %}
+                    </div>
+                {% endfor %}
+
+                    <h3>Additional Comments</h3>
+
+                    {% for comment in additional_question %}
+                        <div class="additional-question">
+                            <label>{{ comment.additional_question }}</label>
+                        </div>
+                        <input type="text" name="additional_question{{ comment.id }}" class="single-line-input" ></input>
+                    {% endfor %} 
+                                   
+                <div class="buttons" style="align-items: center;">
+                <button type="submit" class="submit-btn">Submit</button>
+            </div>
+        </form>
+
+       <script>
+        document.querySelector('.submit-btn').addEventListener('click', function () {
+            document.querySelector('form').submit();
+        });
+        </script>
+
+    </div>
+</body>
+</html>

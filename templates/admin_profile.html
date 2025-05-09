@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/all.min.css') }}">
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;500&amp;display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='framework.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin_dashboard.css') }}">
+</head>
+
+<body>  
+    <div class="page d-flex">
+        <div class="sidebar bg-white p-20 p-relative">
+            <ul>
+                <li>
+                    <a href="{{ url_for('admin_dashboard') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                        <i class="fas fa-tachometer-alt fa-fw"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin_list') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                        <i class="fa-solid fa-people-group"></i>
+                        <span>Activity</span>
+                    </a>
+                </li>
+               
+                <li>
+                    <a href="{{ url_for('admin_results')}}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                        <i class="fa-solid fa-square-poll-vertical"></i>
+                        <span>Results</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin_settings') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                        <i class="fa fa-gears"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>     
+                
+            </ul>
+        </div>
+        <div class="content w-full">
+              <!-- Start Header -->
+                <div class="header bg-white p-14 between-flex" style="border-radius: 20px; padding: 10px; margin-right: 300px;">
+                    <div class="logo-container">
+                        <img src="{{ url_for('static', filename='images/STC_logo.png') }}" alt="Logo 2" class="logo">
+                    </div>
+        
+                    <div class="search-container">
+                        <input id="searchInput" class="search-box" type="search" placeholder="Search ">
+                        <i class="fas fa-search search-icon"></i>
+                        <div id="searchResults" class="search-results"></div>
+                    </div>
+                    <div class="user d-flex align-items-center">
+            
+                    <!-- User Info -->
+                    <div class="user-info d-flex align-items-center">
+                        <div class="user-img" id="userDropdownToggle">
+                            <img src="{{ admin.profile_image if admin.profile_image else '/static/images/user.png' }}" alt="User">
+                        </div>
+                    </div>
+                    
+                    <!-- Dropdown Menu -->
+                    <div id="userDropdown" class="dropdown-menu">
+                        <ul>
+                            <li>
+                                <a href="{{ url_for('admin_profile') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                                    <i class="fas fa-user fa-fw"></i>
+                                    <span>Profile</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('admin_logout') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                                    <i class="fas fa-sign-out-alt fa-fw"></i>
+                                    <span>Logout</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+            
+            <!-- End Header -->
+
+            <!-- Start Profile -->
+            <h1 class="p-relative">Profile</h1>
+            <div class="container">
+                <div class="overview bg-white rad-10">
+                    <div class="d-flex">
+                    <div class="profile-info text-center">
+                        <div class="intro">
+                            <img class="rad-half mb-10 mt-10" src="{{ admin.profile_image}}" alt="User">
+                        </div>
+                        <div class="info">
+                        <h3 class="m-0" id="profile-username">{{ admin.username }}</h3>
+                        <p class="border-line"></p>
+                    
+                        <h4>General Information</h4>
+                        <div class="profile-details">
+                            <div class="detail-row">
+                                <span class="label" ><i class="fa-solid fa-circle-user"></i></span>
+                                <span class="value" id="profile-fullname">{{ admin.fullname }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label"><i class="fa-solid fa-envelope"></i></span>
+                                <span class="value" id="profile-email">{{ admin.email }}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label"><i class="fa-solid fa-phone"></i></span>
+                                <span class="value" id="profile-phone">{{ admin.phone }}</span>
+                            </div>
+                        </div>
+                    
+                        <button id="edit-btn">Edit Profile</button></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overview-info bg-white m-0 ml-20 p-20 rad-10" id="edit-form-container" style="display: none;">
+                    <div class="info-box mt-0 flex-1">
+                        <div class="box p-20 d-flex align-items-center flex-wrap">
+                            <h4 class="color-black font-15 m-0 mb-10 w-full">Edit Profile</h4>
+                            <div class="edit-form">
+                                <form method="POST" action="{{ url_for('edit_admin_profile') }}" enctype="multipart/form-data">
+                                    <label for="username">Username:</label>
+                                    <input type="text" name="username" id="username" value="{{ admin.username }}" required>
+                                    
+                                    <label for="fullname">Full Name:</label>
+                                    <input type="text" name="fullname" id="fullname" value="{{ admin.fullname }}" required>
+            
+                                    <label for="email">Email:</label>
+                                    <input type="email" name="email" id="email" value="{{ admin.email }}" required>
+            
+                                    <label for="phone">Phone:</label>
+                                    <input type="text" name="phone" id="phone" value="{{ admin.phone }}" required>
+
+                                    <label for="profile_picture">Profile Picture:</label>
+                                    <input type="file" name="profile_picture" id="profile_picture" accept="image/*">                                
+            
+                                    <button type="submit">Save Changes</button>
+                                    <button type="button" id="cancel-btn">Cancel</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div id="flash-message" class="flash-message">
+                {% for category, message in messages %}
+                    <p class="{{ category }}">{{ message }}</p>
+                {% endfor %}
+                </div>
+            {% endif %}
+            {% endwith %}     
+            <!-- End Profile -->
+
+            <script>
+                document.addEventListener("DOMContentLoaded", function () {
+                    const form = document.querySelector(".edit-form form");
+                    const editFormContainer = document.getElementById("edit-form-container");
+                    const editBtn = document.getElementById("edit-btn");
+                    const cancelBtn = document.getElementById("cancel-btn");
+                    const container = document.querySelector(".container"); // Select main container
+            
+                    // Show Edit Form and Adjust Width
+                    editBtn.addEventListener("click", function () {
+                        editFormContainer.style.display = "block";  // Show form
+                        container.classList.add("edit-mode");  // Add class to resize container
+                        editBtn.style.display = "none";  // Hide edit button
+                    });
+            
+                    // Hide Edit Form and Reset Width
+                    cancelBtn.addEventListener("click", function () {
+                        editFormContainer.style.display = "none";  // Hide form
+                        container.classList.remove("edit-mode");  // Reset container width
+                        editBtn.style.display = "block";  // Show edit button
+                        form.reset();  // Reset input fields
+                    });
+            
+                    // Handle Form Submission via AJAX
+                    form.addEventListener("submit", function (event) {
+                        event.preventDefault();  // Prevent page reload
+            
+                        const formData = new FormData(form);
+            
+                        fetch("{{ url_for('edit_admin_profile') }}", {
+                            method: "POST",
+                            body: formData
+                        })
+                        .then(response => response.json()) 
+                        .then(data => {
+                            if (data.success) {
+                                // Update Profile Display After Save
+                                document.getElementById("profile-username").innerText = formData.get("username");
+                                document.getElementById("profile-fullname").innerText = formData.get("fullname");
+                                document.getElementById("profile-email").innerText = formData.get("email");
+                                document.getElementById("profile-phone").innerText = formData.get("phone");
+            
+                                // Show success message
+                                alert("Profile updated successfully!");
+            
+                                // Hide form & reset fields
+                                editFormContainer.style.display = "none";
+                                container.classList.remove("edit-mode");  // Reset width
+                                editBtn.style.display = "block";
+                            } else {
+                                alert("Error updating profile: " + data.message);
+                            }
+                        })
+                        .catch(error => console.error("Error:", error));
+                    });
+                });
+            </script>
+
+        <script>
+            document.getElementById("profile_picture").addEventListener("change", function(event) {
+                let file = event.target.files[0];
+                if (file) {
+                    let reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.getElementById("profile-pic").src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        </script>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const flashMessage = document.getElementById("flash-message");
+
+                if (flashMessage) {
+                    flashMessage.style.display = "block"; // Show the message
+                    setTimeout(() => {
+                        flashMessage.style.display = "none"; // Hide after 3 seconds
+                    }, 3000);
+                }
+            });
+        </script>
+
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const userDropdownToggle = document.getElementById("userDropdownToggle");
+                const userDropdown = document.getElementById("userDropdown");
+            
+                userDropdownToggle.addEventListener("click", function (event) {
+                    event.stopPropagation();
+                    userDropdown.classList.toggle("show");
+                });
+            
+                // Close dropdown if clicking outside
+                document.addEventListener("click", function (event) {
+                    if (!userDropdown.contains(event.target) && !userDropdownToggle.contains(event.target)) {
+                        userDropdown.classList.remove("show");
+                    }
+                });
+            });
+            
+        </script>
+        <script>
+            document.getElementById("searchInput").addEventListener("input", async function () {
+            let query = this.value.trim();
+            let searchResults = document.getElementById("searchResults");
+
+            if (query === "") {
+                searchResults.style.display = "none";
+                return;
+            }
+
+            try {
+                let response = await fetch(`/search_participant?q=${encodeURIComponent(query)}`);
+                let data = await response.json();
+
+                searchResults.innerHTML = "";
+                if (data.length === 0) {
+                    searchResults.innerHTML = "<div>No results found</div>";
+                } else {
+                    data.forEach(participant => {
+                        let div = document.createElement("div");
+                        div.classList.add("search-result");
+                        div.innerHTML = `<strong>${participant.name}</strong> - ${participant.activity_name} <br>
+                                        <small>${participant.venue}, ${participant.school}</small>`;
+                        div.onclick = () => window.location.href = `/view-participant/${participant.id}`;
+                        searchResults.appendChild(div);
+                    });
+                }
+                searchResults.style.display = "block";
+            } catch (error) {
+                console.error("Error fetching search results:", error);
+            }
+        });
+
+        // Hide results when clicking outside
+        document.addEventListener("click", function (e) {
+            let searchBox = document.getElementById("searchInput");
+            let searchResults = document.getElementById("searchResults");
+
+            if (!searchBox.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = "none";
+            }
+        });  
+    </script>
+</body>
+
+</html>

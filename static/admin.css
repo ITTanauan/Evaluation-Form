@@ -1,0 +1,179 @@
+/* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(to bottom,  #fdd4d4,#ffffff);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    padding: 10px; /* Prevents content from touching screen edges */
+}
+
+/* Container */
+.container {
+    position: relative;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    width: 100%;
+    max-width: 400px; /* Ensures it doesn’t get too wide */
+    margin: auto;
+    padding: 40px 40px 20px 40px;
+    box-sizing: border-box; /* Ensures padding doesn't exceed width */
+}
+
+/* Headings */
+h2 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+/* Form Inputs */
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    box-sizing: border-box; /* Prevents input overflow */
+}
+
+.input-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.input-box input[type="password"],
+.input-box input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    padding-right: 40px; /* Space for the eye icon */
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none;
+}
+
+.input-box img {
+    position: absolute;
+    right: 10px;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.input-box input[type="checkbox"] {
+    margin-left: 10px;
+}
+
+/* Buttons */
+button {
+    background: linear-gradient(to right,  #3e8e40,#48c432);
+    color: white;
+    border: none;
+    padding: 14px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    width: 100%;
+    border-radius: 20px;
+}
+
+button:hover {
+    background: #3e8e41;
+    transform: scale(1.02);
+}
+
+/* Back Button - Positioned at the Top Inside the Container */
+.back-btn {
+    position: absolute;
+    top: 13px;
+    left: 40px;
+}
+
+.back-btn button {
+    background-color: transparent;  
+    color: #ffffff;
+    padding: 8px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+}
+
+button i {
+    margin-left: 0px;
+}
+
+.back-btn button:hover {
+    background: #3e8e41;
+    transform: scale(1.02);
+}
+
+/* Flash Messages */
+.flash {
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.flash.success { background-color: #4CAF50; color: white; }
+.flash.danger { background-color: #f44336; color: white; }
+.flash.info { background-color: #2196F3; color: white; }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        width: 90%;
+        padding: 40px 30px;
+    }
+
+    .back-btn {
+        top: 10px;
+        left: 10px;
+    }
+
+    .back-btn button {
+        font-size: 13px;
+        padding: 6px 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        width: 95%;
+        padding: 30px;
+    }
+
+    input {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    button {
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    .back-btn {
+        top: 5px;
+        left: 10px;
+    }
+
+    .back-btn button {
+        font-size: 12px;
+        padding: 5px 8px;
+    }
+}

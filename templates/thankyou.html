@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='summary.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+</head>
+<body>
+    <div class="container">
+
+        <div class="buttons">
+            <button onclick="window.location.href='{{ url_for('home') }}'">
+                <i class="fas fa-arrow-left"></i>
+            </button>       
+        </div>
+        
+        <div class="form-logo">
+            <img src="{{ url_for('static', filename='images/STC_Logo.png') }}" alt="Logo 2" class="logo">
+        </div>
+
+        <h3>Thank you!</h3>
+        <p> Your response is highly appriciated.</p>
+
+    </div>
+    
+</body>
+</html>

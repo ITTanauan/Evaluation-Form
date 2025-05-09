@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/all.min.css') }}">
+
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;500&amp;display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='framework.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin_dashboard.css') }}">
+</head>
+
+<body>
+    <div class="page d-flex"> 
+        <div class="sidebar bg-white p-20 p-relative">
+            <ul>
+                <li>
+                    <a href="{{ url_for('admin_dashboard') }}" class="active d-flex align-items-center font-14 p-10 rad-6 color-black" style="margin-top: 0;">
+                        <i class="fa-solid fa-house"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <!-- <li>
+                    <a href="{{ url_for('admin_messages') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                        <i class="fa-solid fa-envelope"></i>
+                        <span>Messages</span>
+                    </a>
+                </li> -->
+                <li>
+                    <a href="{{ url_for('admin_list') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                        <i class="fa-solid fa-people-group"></i>
+                        <span>Activity</span>
+                    </a>
+                </li>
+               
+                <li>
+                    <a href="{{ url_for('admin_results')}}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                        <i class="fa-solid fa-square-poll-vertical"></i>
+                        <span>Results</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin_settings') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                        <i class="fa fa-gears"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
+                
+                
+            </ul>
+        </div>
+        <div class="content w-full ">
+            <!-- Start Header -->
+            <div class="header bg-white p-14 between-flex" style="border-radius: 20px; padding: 10px; margin-right: 300px;">
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='images/STC_logo.png') }}" alt="Logo 2" class="logo">
+                </div>
+    
+                <div class="search-container">
+                    <input id="searchInput" class="search-box" type="search" placeholder="Search ">
+                    <i class="fas fa-search search-icon"></i>
+                    <div id="searchResults" class="search-results"></div>
+                </div>
+                <div class="user d-flex align-items-center">
+                                
+                    <!-- User Info -->
+                    <div class="user-info d-flex align-items-center">
+                        <div class="user-img" id="userDropdownToggle">
+                            <img src="{{ admin.profile_image if admin.profile_image else '/static/images/user.png' }}" alt="User">
+                        </div>
+                    </div>
+                    
+                    <!-- Dropdown Menu -->
+                    <div id="userDropdown" class="dropdown-menu">
+                        <ul>
+                            <li>
+                                <a href="{{ url_for('admin_profile') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                                    <i class="fas fa-user fa-fw"></i>
+                                    <span>Profile</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('admin_logout') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                                    <i class="fas fa-sign-out-alt fa-fw"></i>
+                                    <span>Logout</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                </div>
+            </div>
+            <!-- End Header -->
+             
+            <h1 class="p-relative">Dashboard</h1>
+            <div class="wrapper d-grid gap-20">
+                <!-- Start Welcome widget -->
+                <div class="welcome bg-white rad-10 text-center-mobile p-10">
+                    <div class="admin">
+                        <img src="{{ admin.profile_image}}" alt="User">
+                        <div class="admin-text">Admin<span class="d-block color-grey font-14 mt-5 ">Backend Developer</span></div>
+                    </div>
+                    <div class="body text-center mt-20" style=" border-top: 2px solid #eee;">
+                    <a class="btn profile-btn font-15 p-5 "
+                        href="{{ url_for('admin_profile') }}">Profile</a> </div>
+                </div>
+                <!-- End Welcome widget -->
+
+                <!-- Start Participant Widget -->
+                <a href="{{ url_for('view_total_participant', activity_name='all') }}" class="comment-link">
+                    <div class="comment bg-white rad-10 text-center-mobile p-10">
+                        <div class="comment-text p-20">
+                            <h2 class="m-0 mt-20"> <i class="fa-solid fa-user" style="color:#d27d6c; margin-right: 20px; "></i> Participants </h2>
+                            <h3 class="m-0 font-30 p-0 " >{{ total_participants }}</h3> 
+                        </div>
+                    <div class="body text-center p-10 mt-10">
+                        <p class="d-block font-15 color-grey ">Total number of participants</p> </div>
+                    </div>
+                </a>
+                <!-- End Participant widget -->
+                
+                <!-- Start Activity Widget -->
+                <a href="{{ url_for('admin_list') }}" class="activity-link">
+                    <div class="activity bg-white rad-10 text-center-mobile p-10">
+                        <div class="activity-text p-20">
+                            <h2 class="m-0 mt-20 "> <i class="fa-solid fa-people-group" style="color:#d27d6c; margin-right: 20px; "></i> Activity</h2>
+                            <h3 class=" mt-15 font-30 mb-0" >{{ total_activities }}</h3> 
+                        </div>
+                        <div class="body text-center p-10 mt-10">
+                            <p class="d-block font-15 color-grey"> Total Activities Created</p> </div>
+                    </div>
+                </a>
+                 <!-- End Activity widget -->
+
+                <!-- Start Result Widget -->
+                <a href="{{ url_for('admin_results') }}" class="activity-link">
+                    <div class="result bg-white rad-10 text-center-mobile p-10">
+                        <div class="result-text p-10">
+                            <h2 class="m-0 mt-10"><i class="fa-solid fa-chart-pie" style="color:#d27d6c; margin-right: 20px;"></i> Rating Distribution</h2>
+                            <canvas class="mb-0" id="ratingPieChart" style="display: block; margin-top: 10px; margin-left: 100px;"></canvas>
+                        </div>
+                    </div>
+                </a>
+                 <!-- End Result widget -->
+
+            </div>
+
+        <script src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>   
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const ratingData = {{ rating_percentages | tojson }};
+                const ctx = document.getElementById("ratingPieChart").getContext("2d");
+        
+                new Chart(ctx, {
+                    type: "pie",
+                    data: {
+                        labels: ["Rating 0", "Rating 1", "Rating 2", "Rating 3"],
+                        datasets: [{
+                            data: [ratingData[0], ratingData[1], ratingData[2], ratingData[3]],
+                            backgroundColor: ["#009CA6", "#45B383","#AE90C3",  "#F6B0BD"],
+                            borderColor: "#ffffff",
+                            borderWidth: 2, 
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false, 
+                        layout: {
+                            padding: {
+                                right: 50 
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: "bottom",
+                                maxWidth: 300,
+                                fullSize: false,
+                                labels: {
+                                    font: { size: 14 },
+                                    boxWidth: 20,
+                                    color: "black",
+                                    padding: 5, 
+                                    usePointStyle: true,
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: (tooltipItem) => `${tooltipItem.raw.toFixed(2)}%`
+                                }
+                            }
+                        }
+                    }                
+
+                });
+            });
+        </script>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const userDropdownToggle = document.getElementById("userDropdownToggle");
+                const userDropdown = document.getElementById("userDropdown");
+            
+                userDropdownToggle.addEventListener("click", function (event) {
+                    event.stopPropagation();
+                    userDropdown.classList.toggle("show");
+                });
+            
+                // Close dropdown if clicking outside
+                document.addEventListener("click", function (event) {
+                    if (!userDropdown.contains(event.target) && !userDropdownToggle.contains(event.target)) {
+                        userDropdown.classList.remove("show");
+                    }
+                });
+            });
+            
+        </script>
+
+        <script>
+            document.getElementById("searchInput").addEventListener("input", async function () {
+            let query = this.value.trim();
+            let searchResults = document.getElementById("searchResults");
+
+            if (query === "") {
+                searchResults.style.display = "none";
+                return;
+            }
+
+            try {
+                let response = await fetch(`/search_participant?q=${encodeURIComponent(query)}`);
+                let data = await response.json();
+
+                searchResults.innerHTML = "";
+                if (data.length === 0) {
+                    searchResults.innerHTML = "<div>No results found</div>";
+                } else {
+                    data.forEach(participant => {
+                        let div = document.createElement("div");
+                        div.classList.add("search-result");
+                        div.innerHTML = `<strong>${participant.name}</strong> - ${participant.activity_name} <br>
+                                        <small>${participant.venue}, ${participant.school}</small>`;
+                        div.onclick = () => window.location.href = `/view-participant/${participant.id}`;
+                        searchResults.appendChild(div);
+                    });
+                }
+                searchResults.style.display = "block";
+            } catch (error) {
+                console.error("Error fetching search results:", error);
+            }
+        });
+
+        // Hide results when clicking outside
+        document.addEventListener("click", function (e) {
+            let searchBox = document.getElementById("searchInput");
+            let searchResults = document.getElementById("searchResults");
+
+            if (!searchBox.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = "none";
+            }
+        });  
+    </script>
+        
+</body>
+
+</html>

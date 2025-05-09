@@ -1,0 +1,341 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Soft Background */
+html, body {
+    width: 100%;
+    height: 100vh;
+    overflow: hidden; /* Prevents scrolling */
+    touch-action: none; /* Prevents touch gestures */
+    background: linear-gradient(to bottom,  #fdd4d4,#ffffff);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    position: relative;
+    overflow-y: auto;  /* Enables scrolling */
+    scroll-behavior: smooth;  /* Smooth scrolling effect */
+    scrollbar-width: none; /* Hide in Firefox */
+    -ms-overflow-style: none; /
+}
+
+
+/* Background Image */
+body::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover; /* Ensures full background visibility */
+    opacity: 1; /* Adjust transparency */
+    z-index: 0;
+}   
+
+/* Ensure all content stays within viewport */
+body * {
+    position: relative;
+    z-index: 1;
+    max-width: 100%;
+    
+}
+
+/* Form Container */
+.container {
+    max-width: 1000px;
+    background: #ffffffe3;
+    padding: 50px;
+    border-radius: 4px;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+    animation: fadeIn 0.5s ease-in-out; 
+    margin:auto;
+}
+
+.logo { 
+    width: 30vh; /* Adjust size as needed */
+    height: auto;
+}
+
+.logo-container {
+    display: flex;
+    gap: 15px; /* Adds spacing between logos */
+    flex-wrap: wrap;
+}
+
+/* Headings */
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+h2 {
+    font-weight: bold;
+    text-align: center;
+    margin-top:10px;
+    margin-bottom: 25px;
+}
+
+p {
+    margin: 5px 0;
+    font-size:15px;
+    text-align: justify;
+}
+
+/*Category*/
+.category {
+    padding: 15px;
+    margin-bottom: 20px;
+    margin-top: 30px;
+}
+
+.header-category {
+    display: flex;  
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 10px;  
+    margin-bottom: 0; 
+    border-bottom: 2px solid #000000; 
+    position: relative;
+}
+
+.category-name {
+    padding: 10px;
+}
+
+.rating {
+    margin-right: 100px;
+    white-space: nowrap; 
+}
+
+.header-category h3 {
+    color: #000000cc; 
+    display: inline-block;
+    margin-left:5px;
+}
+
+/* Question Layout */
+.question {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 20px;
+    margin-bottom: 10px;
+}
+
+.question-text {
+    flex: 3; /* Allow question text to take more space */
+    min-width: 60%; /* Ensures it doesn't shrink too much */
+    word-wrap: break-word;
+}
+
+/* Options */
+.options {
+    flex: 1; /* Ensures space for radio buttons */
+    display: flex;
+    justify-content: space-around;
+    min-width: 200px;
+}
+
+/*Text Area*/
+textarea#comment {
+    width: 100%; 
+    min-height: 10px;
+    max-width: 60%; 
+    resize: vertical; 
+    padding: 5px;
+    border-radius: 7px;
+    margin-left: 20px;
+}
+
+/*Additional Question*/
+.additional-question {
+    margin-top: 20px;
+    margin-left: 15px;
+}
+
+.single-line-input {
+    width: 97%; 
+    border: none; 
+    border-bottom: 1px solid #000; 
+    background: transparent; 
+    font-size: 16px;
+    padding: 5px 0; 
+    outline: none; 
+    margin-left: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.single-line-input:focus {
+    border-bottom: 3px solid #000000; /* Changes underline color on focus */
+}
+
+/* Radio Button Styling */
+input[type="radio"] {
+    transform: scale(1.2);
+    cursor: pointer;
+}
+
+/* Buttons Layout */
+.buttons {
+    display: flex;
+    justify-content: center; /* Center buttons dynamically */
+    margin-top: 20px;
+}
+
+.buttons button {
+    flex: 1;
+    min-width: 110px;
+    padding: 12px 20px;
+    font-size: 18px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.submit-btn {
+    background: linear-gradient(to right,  #3e8e40,#48c432);
+    color: rgb(249, 252, 249);
+    margin-top: 20px;
+    
+}
+
+.submit-btn:hover {
+    background: #3e8e41;
+    transform: scale(1.02);
+}
+
+/* Fade-in Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 480px) {
+
+    html, body {
+        overflow-x: hidden;  
+        overflow-y: auto;  
+        height: auto;        
+        min-height: 100vh;   
+        touch-action: auto;  
+        scroll-behavior: smooth; 
+        -webkit-overflow-scrolling: touch; 
+        width: auto;
+        min-width: 100vw;
+    }
+
+    body::after {
+        content: "";
+        display: block;
+        height: 80px; 
+    }
+
+    .logo { 
+        width: 15vh;
+        height: auto;
+    }
+    
+    .logo-container {
+        gap: 25px; 
+    }
+        
+    h2, p {
+        font-size: 15px; /* Adjust font size for better spacing */
+        max-width: 100%;    
+        line-height: 1; /* Controls spacing between lines */
+        word-wrap: break-word;
+        overflow-wrap: break-word; 
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        overflow: visible; 
+        margin-top: 3%;
+        margin-bottom: 2%;
+    }
+
+    .header-category {
+        display: flex;
+        justify-content: space-between; /* Ensures elements are spaced out */
+        width: 100%;
+        margin-left: 0px;
+    }
+
+    .header-category .category-name {
+        font-size: 15px;
+        flex-grow: 1; 
+        text-align: center; 
+        margin-top: 2%;
+    }
+
+    .header-category .rating {
+        display: none; /* ✅ Removes it from layout instead of just hiding */
+    }    
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        width: 100%;  
+        max-width: 100%; 
+        padding: 20px;
+        margin-top: 2%;
+        margin-left: auto;
+        margin-right: auto; 
+        overflow-y: auto;  /* ✅ Prevents hidden overflow */
+        height: auto;        /* ✅ Ensures it grows with content */
+        min-height: 100vh;   /* ✅ Expands if needed */
+    }
+    
+    .question {
+        flex-direction: column; /* Stack elements vertically */
+        align-items: flex-start;
+    }
+
+    .category {
+        border: 1px solid black;
+    }
+
+    .question-text {
+        min-width: 100%; /* Ensure full width */
+        font-size: 15px;
+        margin-bottom: 20px;
+        text-align: justify;
+    }
+
+    .options {
+        flex-wrap: wrap; /* Allow options to wrap if needed */
+        justify-content: flex-start;
+        gap: 10px;
+        justify-content: center;
+    }
+
+    textarea#comment {
+        width: 210px;
+        max-width: 100%; /* Adjust width for small screens */ 
+    }
+    
+    .buttons {
+        display: flex;
+        justify-content: center; 
+        margin-left: 0; /* Remove extra margin */
+    }
+
+    .buttons button {
+        font-size: 16px;
+        padding: 10px 15px;
+    }
+}

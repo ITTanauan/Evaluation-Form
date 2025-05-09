@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/all.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='framework.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin_dashboard.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;500&amp;display=swap" rel="stylesheet">
+
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    
+</head>
+
+<body>
+    <div class="page d-flex">
+        <div class="sidebar bg-white p-20 p-relative">
+            <ul>
+                <li>
+                    <a href="{{ url_for('admin_dashboard') }}" class=" d-flex align-items-center font-14 p-10 rad-6 color-black">
+                        <i class="fa-solid fa-house"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{{ url_for('admin_list') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                        <i class="fa-solid fa-people-group"></i>
+                        <span>Activity</span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a href="{{ url_for('admin_results')}}" class="active d-flex align-items-center font-14 p-10 rad-6 color-black">
+                        <i class="fa-solid fa-square-poll-vertical"></i>
+                        <span>Results</span>
+                    </a>
+                </li>
+               
+                <li>
+                    <a href="{{ url_for('admin_settings') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                        <i class="fa fa-gears"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="content w-full">
+             <!-- Start Header -->
+             <div class="header bg-white p-14 between-flex" style="border-radius: 20px;padding: 10px;">
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='images/STC_logo.png') }}" alt="Logo 2" class="logo">
+                </div>
+                <div class="search-container">
+                    <input id="searchInput" class="search-box" type="search" placeholder="Search ">
+                    <i class="fas fa-search search-icon"></i>
+                    <div id="searchResults" class="search-results"></div>
+                </div>
+                <div class="user d-flex align-items-center">
+                                
+                    <!-- User Info -->
+                    <div class="user-info d-flex align-items-center">
+                        <div class="user-img" id="userDropdownToggle">
+                            <img src="{{ admin.profile_image}}"  alt="User">
+                        </div>
+                    </div>
+                    
+                    <!-- Dropdown Menu -->
+                    <div id="userDropdown" class="dropdown-menu">
+                        <ul>
+                            <li>
+                                <a href="{{ url_for('admin_profile') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                                    <i class="fas fa-user fa-fw"></i>
+                                    <span>Profile</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('admin_logout') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                                    <i class="fas fa-sign-out-alt fa-fw"></i>
+                                    <span>Logout</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                </div>
+            </div>
+            <!-- End Header -->
+
+            <h1 class="p-relative">Assessment Ratings Summary</h1>
+
+            <div id="charts-container">
+                {% for category, data in category_data.items() %}
+                    <div class="chart-container">
+                        <h2>{{ category }}</h2>
+                        <canvas id="chart-{{ loop.index }}"></canvas>
+                    </div>
+                {% endfor %}
+            </div>   
+            
+            </div>
+            
+        <!-- Use Chart.js v3+ -->
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js/helpers"></script>
+        
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const categoryData = {{ category_data | tojson }};
+                console.log("Category Data:", categoryData);
+        
+                const categories = [
+                    "About the topic/s", 
+                    "About the materials", 
+                    "About the facilitator/s",
+                    "About the food and venue",  
+                    "About Save The Children Staff Support"
+                ];
+        
+                let chartIndex = 1;
+        
+                categories.forEach(category => {
+                    const ctx = document.getElementById(`chart-${chartIndex}`).getContext('2d');
+        
+                    if (!categoryData[category]) return;
+        
+                    // 🔹 Extract & Sort Unique Question Numbers
+                    let originalQuestionNumbers = [...new Set(categoryData[category].map(item => item.question_number))];
+                    originalQuestionNumbers.sort((a, b) => a - b);
+        
+                    // 🔹 Create a Mapping (Original -> New Sequence)
+                    let questionNumberMap = {};
+                    originalQuestionNumbers.forEach((qNum, index) => {
+                        questionNumberMap[qNum] = index + 1; // Start from 1
+                    });
+        
+                    // 🔹 Initialize rating counts per new question number
+                    let ratingCounts = {};
+                    Object.values(questionNumberMap).forEach(newQNum => {
+                        ratingCounts[newQNum] = { 0: 0, 1: 0, 2: 0, 3: 0 };
+                    });
+        
+                    // 🔹 Populate rating counts
+                    categoryData[category].forEach(item => {
+                        let newQNum = questionNumberMap[item.question_number]; // Get mapped question number
+                        if (newQNum !== undefined) {
+                            ratingCounts[newQNum][item.rating]++;
+                        }
+                    });
+        
+                    // 🔹 Prepare datasets for 0, 1, 2, 3 ratings
+                    const ratingLabels = ["0", "1", "2", "3"];
+                    const datasets = ratingLabels.map((rating, index) => ({
+                        label: `Rating ${rating}`,
+                        data: Object.values(ratingCounts).map(q => q[rating]), // Get count per new question number
+                        backgroundColor: ['#ef7c8e', '#fae8e0', '#b6e2d3', '#d8a7b1'][index], // Color per rating
+                        borderColor: 'rgba(0, 0, 0, 0.8)',
+                        borderWidth: 1
+                    }));
+        
+                    // 🔹 Render Chart
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: Object.values(questionNumberMap).map(newQNum => `Q${newQNum}`), // Use new question numbers
+                            datasets: datasets
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        font: { size: 14 }
+                                    }
+                                },
+                                x: {
+                                    ticks: {
+                                        font: { size: 14 }
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                    labels: { font: { size: 16 },}
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: tooltipItem => `Count: ${tooltipItem.raw}`
+                                    }
+                                }
+                            }
+                        }
+                    });
+        
+                    chartIndex++;
+                });
+            });
+        </script>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const userDropdownToggle = document.getElementById("userDropdownToggle");
+                const userDropdown = document.getElementById("userDropdown");
+            
+                userDropdownToggle.addEventListener("click", function (event) {
+                    event.stopPropagation();
+                    userDropdown.classList.toggle("show");
+                });
+            
+                // Close dropdown if clicking outside
+                document.addEventListener("click", function (event) {
+                    if (!userDropdown.contains(event.target) && !userDropdownToggle.contains(event.target)) {
+                        userDropdown.classList.remove("show");
+                    }
+                });
+            });
+            
+        </script>
+        <script>
+            document.getElementById("searchInput").addEventListener("input", async function () {
+            let query = this.value.trim();
+            let searchResults = document.getElementById("searchResults");
+
+            if (query === "") {
+                searchResults.style.display = "none";
+                return;
+            }
+
+            try {
+                let response = await fetch(`/search_participant?q=${encodeURIComponent(query)}`);
+                let data = await response.json();
+
+                searchResults.innerHTML = "";
+                if (data.length === 0) {
+                    searchResults.innerHTML = "<div>No results found</div>";
+                } else {
+                    data.forEach(participant => {
+                        let div = document.createElement("div");
+                        div.classList.add("search-result");
+                        div.innerHTML = `<strong>${participant.name}</strong> - ${participant.activity_name} <br>
+                                        <small>${participant.venue}, ${participant.school}</small>`;
+                        div.onclick = () => window.location.href = `/view-participant/${participant.id}`;
+                        searchResults.appendChild(div);
+                    });
+                }
+                searchResults.style.display = "block";
+            } catch (error) {
+                console.error("Error fetching search results:", error);
+            }
+        });
+
+        // Hide results when clicking outside
+        document.addEventListener("click", function (e) {
+            let searchBox = document.getElementById("searchInput");
+            let searchResults = document.getElementById("searchResults");
+
+            if (!searchBox.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = "none";
+            }
+        });  
+    </script>
+            
+</body>
+
+</html> 

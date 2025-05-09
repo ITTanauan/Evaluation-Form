@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Total Participants</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/all.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='framework.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin_dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='view.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;500&amp;display=swap" rel="stylesheet">
+
+</head>
+
+<body>
+    <div class="page d-flex">
+        <div class="sidebar bg-white p-20 p-relative">
+            <ul>
+                <li>
+                    <a href="{{ url_for('admin_dashboard') }}" class=" d-flex align-items-center font-14 p-10 rad-6 color-black">
+                        <i class="fas fa-tachometer-alt fa-fw"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin_list') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                        <i class="fa-solid fa-people-group"></i>
+                        <span>Activity</span>
+                    </a>
+                </li>
+               
+                <li>
+                    <a href="{{ url_for('admin_results')}}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                        <i class="fa-solid fa-square-poll-vertical"></i>
+                        <span>Results</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin_settings') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                        <i class="fa fa-gears"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="content w-full ">
+            <!-- Start Header -->
+            <div class="header bg-white p-14 between-flex" style="border-radius: 20px; padding: 10px; margin-right: 300px;">
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='images/STC_logo.png') }}" alt="Logo 2" class="logo">
+                </div>
+    
+                <div class="search-container">
+                    <input id="searchInput" class="search-box" type="search" placeholder="Search ">
+                    <i class="fas fa-search search-icon"></i>
+                    <div id="searchResults" class="search-results"></div>
+                </div>
+                <div class="user d-flex align-items-center">
+                                
+                    <!-- User Info -->
+                    <div class="user-info d-flex align-items-center">
+                        <div class="user-img" id="userDropdownToggle">
+                            <img src="{{ admin.profile_image}}"  alt="User">
+                        </div>
+                    </div>
+                    
+                    <!-- Dropdown Menu -->
+                    <div id="userDropdown" class="dropdown-menu">
+                        <ul>
+                            <li>
+                                <a href="{{ url_for('admin_profile') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                                    <i class="fas fa-user fa-fw"></i>
+                                    <span>Profile</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('admin_logout') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                                    <i class="fas fa-sign-out-alt fa-fw"></i>
+                                    <span>Logout</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="participants-table bg-white rad-10 m-10 p-20">
+                <h2 class="m-0 mb-20" >
+                    <i class="fa-solid fa-people-group" style="margin:0px 10px 0px;"></i>Participants for {{ activity_name }}</h2>
+                <div class="responsive-table">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Name of Activity</th>
+                                <th>Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for participant in participants %}
+                                <tr>
+                                    <td>{{ participant.name }}</td>
+                                    <td>{{ participant.activity_name }}</td>
+                                    <td>{{ participant.date.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <button class="view-btn" onclick="viewParticipant('{{ participant.id }}')">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </button>
+                                        <button onclick="deleteParticipant('{{ participant.id }}')" class="delete-btn">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const userDropdownToggle = document.getElementById("userDropdownToggle");
+                const userDropdown = document.getElementById("userDropdown");
+            
+                userDropdownToggle.addEventListener("click", function (event) {
+                    event.stopPropagation();
+                    userDropdown.classList.toggle("show");
+                });
+            
+                // Close dropdown if clicking outside
+                document.addEventListener("click", function (event) {
+                    if (!userDropdown.contains(event.target) && !userDropdownToggle.contains(event.target)) {
+                        userDropdown.classList.remove("show");
+                    }
+                });
+            });
+        </script>
+
+        <script>
+            document.getElementById("searchInput").addEventListener("input", async function () {
+            let query = this.value.trim();
+            let searchResults = document.getElementById("searchResults");
+                
+             if (query === "") {
+            searchResults.style.display = "none";
+            return;
+            }
+                
+            try {
+            let response = await fetch(`/search_participant?q=${encodeURIComponent(query)}`);
+            let data = await response.json();
+        
+            searchResults.innerHTML = "";
+            if (data.length === 0) {
+                searchResults.innerHTML = "<div>No results found</div>";
+            } else {
+                data.forEach(participant => {
+                    let div = document.createElement("div");
+                    div.classList.add("search-result");
+                    div.innerHTML = `<strong>${participant.name}</strong> - ${participant.activity_name} <br>
+                                    <small>${participant.venue}, ${participant.school}</small>`;
+                    div.onclick = () => window.location.href = `/view-participant/${participant.id}`;
+                    searchResults.appendChild(div);
+                });
+            }
+                searchResults.style.display = "block";
+                    } catch (error) {
+                        console.error("Error fetching search results:", error);
+                        }
+                });
+                
+                // Hide results when clicking outside
+                document.addEventListener("click", function (e) {
+                let searchBox = document.getElementById("searchInput");
+                let searchResults = document.getElementById("searchResults");
+                
+                    if (!searchBox.contains(e.target) && !searchResults.contains(e.target)) {
+                        searchResults.style.display = "none";}
+                    });  
+        </script>
+
+        <script>
+            function viewParticipant(id) {
+                // Redirect to a view page
+                window.location.href = `/view-participant/${id}`;
+            }
+
+            function deleteParticipant(id) {
+                    if (confirm("Are you sure you want to delete this participant and all related data?")) {
+                        fetch(`/delete-participant/${id}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert("✅ Participant deleted successfully.");
+                                location.reload(); // Refresh the page
+                            } else {
+                                alert("❌ Error deleting participant: " + data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Error:", error);
+                            alert("❌ An unexpected error occurred.");
+                        });
+                    }
+                }       
+        </script>
+
+</body>
+</html> 

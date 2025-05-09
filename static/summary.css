@@ -1,0 +1,129 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Background Styling */
+html, body {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    background-color: #f5f4f4;
+    padding: 20px;
+}
+
+body {
+    padding-bottom: 500px;
+}
+
+/* Container Styling */
+.container {
+    width: 30vw;
+    max-width: 800px;
+    text-align: center;
+    animation: fadeIn 0.5s ease-in-out;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    background: white;
+    height:45vh;
+    margin: 200px;
+    border-radius: 10px;
+}
+
+/* Heading */
+h3 {
+    color: #b20b0b;
+    font-size: 24px;
+    margin-top: 40px;
+}
+
+.logo { 
+    width: 30vh; /* Adjust size as needed */
+    height: auto;
+    margin-top: 17%;
+}
+
+.logo-container {
+    display: flex;
+    gap: 15px; /* Adds spacing between logos */
+    flex-wrap: wrap;
+}
+
+.buttons {
+    background: linear-gradient(to right,  #3e8e40,#48c432);
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 20px;
+    border-radius: 20px;
+    position: absolute;
+}
+
+.buttons:hover {
+    background: #3e8e41;
+    transform: scale(1.02);
+}
+
+.buttons button {
+    background: transparent;
+    border: none;
+    color: white;
+    transition: background 0.3s ease;
+    font-size: 16px;
+}
+
+/* 📌 Media Queries for Responsiveness */
+@media (max-width: 768px) { /* Tablets */
+    .container {
+        width: 100vw; /* Use more space on tablets */
+    }
+
+    h2 {
+        font-size: 22px;
+    }
+
+    .summary-table th, .summary-table td {
+        padding: 10px;
+        font-size: 16px;
+    }
+
+    .button.confirm {
+        font-size: 16px;
+        padding: 10px;
+    }
+}
+
+@media (max-width: 480px) { /* Phones */
+    .container {
+        width: 100%; /* Full width */
+        padding: 10px;
+    }
+
+    h2 {
+        font-size: 20px;
+    }
+
+    .summary-title {
+        font-size: 18px;
+        padding: 12px;
+    }
+
+    .summary-table {
+        font-size: 14px;
+    }
+
+    .summary-table th, .summary-table td {
+        padding: 8px;
+        font-size: 14px;
+    }
+
+    .button.confirm {
+        font-size: 14px;
+        padding: 8px;
+    }
+}
+
