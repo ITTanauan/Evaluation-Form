@@ -24,30 +24,32 @@
         <div class="sidebar bg-white p-20 p-relative">
             <ul>
                 <li>
-                    <a href="{{ url_for('admin_dashboard') }}" class=" d-flex align-items-center font-14 p-10 rad-6 color-black">
-                        <i class="fa-solid fa-house"></i>
-                        <span>Dashboard</span>
-                    </a>
+                    <a href="{{ url_for('admin_dashboard', year=request.args.get('year'), month=request.args.get('month')) }}"
+                        class="d-flex align-items-center font-14 p-10 rad-6 color-black {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+                            <i class="fa-solid fa-house"></i>
+                            <span>Dashboard</span>
+                        </a>
                 </li>
-
                 <li>
-                    <a href="{{ url_for('admin_list') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
-                        <i class="fa-solid fa-people-group"></i>
-                        <span>Activity</span>
-                    </a>
-                </li>
-                
-                <li>
-                    <a href="{{ url_for('admin_results')}}" class="active d-flex align-items-center font-14 p-10 rad-6 color-black">
-                        <i class="fa-solid fa-square-poll-vertical"></i>
-                        <span>Results</span>
-                    </a>
+                    <a href="{{ url_for('admin_list', year=request.args.get('year'), month=request.args.get('month')) }}"
+                        class="d-flex align-items-center font-14 p-10 rad-6 color-black {% if request.endpoint == 'admin_list' %}active{% endif %}">
+                            <i class="fa-solid fa-people-group"></i>
+                            <span>Activity</span>
+                        </a>
                 </li>
                
                 <li>
-                    <a href="{{ url_for('admin_settings') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
-                        <i class="fa fa-gears"></i>
-                        <span>Settings</span>
+                    <a href="{{ url_for('admin_results', year=request.args.get('year'), month=request.args.get('month')) }}"
+                        class="d-flex align-items-center font-14 p-10 rad-6 color-black {% if request.endpoint == 'admin_results' %}active{% endif %}">
+                            <i class="fa-solid fa-square-poll-vertical"></i>
+                            <span>Results</span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="{{ url_for('admin_logout') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                        <i class="fas fa-sign-out-alt fa-fw"></i>
+                        <span>Logout</span>
                     </a>
                 </li>
             </ul>
@@ -68,27 +70,10 @@
                                 
                     <!-- User Info -->
                     <div class="user-info d-flex align-items-center">
-                        <div class="user-img" id="userDropdownToggle">
-                            <img src="{{ admin.profile_image}}"  alt="User">
+                        <div class="user-img">
+                            <a href="{{ url_for('admin_profile') }}"> <img src="{{ admin.profile_image}}" alt="User">
+                            </a>
                         </div>
-                    </div>
-                    
-                    <!-- Dropdown Menu -->
-                    <div id="userDropdown" class="dropdown-menu">
-                        <ul>
-                            <li>
-                                <a href="{{ url_for('admin_profile') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
-                                    <i class="fas fa-user fa-fw"></i>
-                                    <span>Profile</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ url_for('admin_logout') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
-                                    <i class="fas fa-sign-out-alt fa-fw"></i>
-                                    <span>Logout</span>
-                                </a>
-                            </li>
-                        </ul>
                     </div>
                     
                 </div>
@@ -162,12 +147,12 @@
                     const datasets = ratingLabels.map((rating, index) => ({
                         label: `Rating ${rating}`,
                         data: Object.values(ratingCounts).map(q => q[rating]), // Get count per new question number
-                        backgroundColor: ['#ef7c8e', '#fae8e0', '#b6e2d3', '#d8a7b1'][index], // Color per rating
+                        backgroundColor: ["#009CA6", "#45B383","#AE90C3",  "#F6B0BD"][index], // Color per rating
                         borderColor: 'rgba(0, 0, 0, 0.8)',
                         borderWidth: 1
                     }));
         
-                    // 🔹 Render Chart
+                    // 🔹 Render Chart 
                     new Chart(ctx, {
                         type: 'bar',
                         data: {

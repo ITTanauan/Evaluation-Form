@@ -2,73 +2,131 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assessment Form</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">    <title>Assessment Form</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 </head>
 <body>
-    <div class="container">
-        
-        <div class="form-logo">
-            <img src="{{ url_for('static', filename='images/STC_Logo.png') }}" alt="Logo 2" class="logo">
-        </div>
-        <h2>Personal Information</h2>
-        <form method="POST" action="{{ url_for('participant') }}">
+        <div class="container">
+            
+            <div class="form-logo">
+                <img src="{{ url_for('static', filename='images/STC_Logo.png') }}" alt="Logo 2" class="logo">
+            </div>
+            <h2>Personal Information</h2>
+            <form method="POST" action="{{ url_for('participant') }}">
+                <input type="hidden" name="admin_id" value="{{ admin_id }}">
 
-            <div class="input-row">
-            <div class="input-group">
-                <label for="name">Name (optional)</label>
-                <input type="text" id="name" name="name">
-            </div>
-            
-            <div class="input-group">
-                <label for="date">Date</label>
-                <input type="date" id="date" name="date" >
-            </div>
-            </div>
-        
-            <div class="input-row">
-            <div class="input-group">
-                <label for="activity_name">Name of Activity</label>
-                <input type="text" id="activity_name" name="activity_name" >
-            </div>
-        
-            <div class="input-group">
-                <label for="venue">Venue</label>
-                <input type="text" id="venue" name="venue" >
-            </div>
-            </div>
-            
-            <div class="input-row">
+                <div class="input-row">
                 <div class="input-group">
-                    <label for="school">School</label>
-                    <input type="text" id="school" name="school" >
+                    <label for="name">Name (optional)</label>
+                    <input type="text" id="name" name="name" value="{{ saved_data.get('name', '') }}">
                 </div>
-            <div class="input-group">
-                <label for="district">District</label>
-                <input type="text" id="district" name="district" >
-            </div>
-            </div>
-        
-            <div class="input-row">
-            <div class="input-group">
-                <label for="facilitator_name">Facilitator/s Name</label>
-                <input type="text" id="facilitator_name" name="facilitator_name" >
-            </div>
-        
-            <div class="input-group">
-                <label for="address">Barangay/Municipality</label>
-                <input type="text" id="address" name="address">
-            </div>
-            </div>
+                
+                <div class="input-group">
+                    <label for="date">Date</label>
+                    <input type="date" id="date" name="date" value="{{ saved_data.get('date', '') }}" >
+                </div>
+                </div>
             
-            <button type="submit" id="nextBtn" >Next →</button>
-        </form>        
-     
-</body>
-</html>
+                <div class="input-row">
+                <div class="input-group">
+                    <label for="activity_name">Name of Activity</label>
+                    <input type="text" id="activity_name" name="activity_name" value="{{ saved_data.get('activity_name', '') }}" required>
+                </div>
+            
+                <div class="input-group">
+                    <label for="venue">Venue</label>
+                    <input type="text" id="venue" name="venue" value="{{ saved_data.get('venue', '') }}">
+                </div>
+                </div>
+                
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="school">School</label>
+                        <input type="text" id="school" name="school" value="{{ saved_data.get('school', '') }}">
+                    </div>
+
+                <div class="input-group">
+                    <label for="district">District</label>
+                <input type="text" id="district" name="district" value="{{ saved_data.get('district', '') }}">
+                </div>
+                </div>
+            
+                <div class="input-row">
+                <div class="input-group">
+                    <label for="facilitator_name">Facilitator/s Name</label>
+                    <input type="text" id="facilitator_name" name="facilitator_name" value="{{ saved_data.get('facilitator_name', '') }}">
+                </div>
+            
+                <div class="input-group">
+                    <label for="address">Barangay/Municipality</label>
+                    <input type="text" id="address" name="address" value="{{ saved_data.get('address', '') }}" >
+                </div>
+                </div>
+                
+                <button type="submit" id="nextBtn" >Next →</button>
+            </form>        
+        
+
+            <script>
+                // Function to save the participant form into localStorage
+                function saveParticipantForm() {
+                    const participantFormData = {};
+                
+                    // Save all text and date inputs
+                    document.querySelectorAll('input[type="text"], input[type="date"]').forEach((input) => {
+                        participantFormData[input.name] = input.value;
+                    });
+                
+                    localStorage.setItem('participant_form', JSON.stringify(participantFormData));
+                }
+                
+                // Function to restore participant form from localStorage
+                function restoreParticipantForm() {
+                    // Check if the form has been submitted (check localStorage or flag in session)
+                    const formSubmitted = localStorage.getItem('form_submitted') === 'true';
+                    
+                    if (!formSubmitted) {
+                        const savedParticipantData = JSON.parse(localStorage.getItem('participant_form') || '{}');
+                    
+                        for (const [name, value] of Object.entries(savedParticipantData)) {
+                            const input = document.querySelector(`[name="${name}"]`);
+                            if (input) {
+                                input.value = value;
+                            }
+                        }
+                    }
+                }
+                
+                // Save whenever user types
+                document.addEventListener('input', saveParticipantForm);
+                
+                // Restore when page loads
+                document.addEventListener('DOMContentLoaded', () => {
+                    restoreParticipantForm();
+                    
+                    // Clear the form submitted flag when a new page is loaded
+                    localStorage.removeItem('form_submitted');
+                });
+                
+                // Clear localStorage when form is submitted
+                document.querySelector('form').addEventListener('submit', () => {
+                    // Mark the form as submitted and clear localStorage
+                    localStorage.setItem('form_submitted', 'true');
+                    localStorage.removeItem('participant_form');
+                });
+            </script>
+
+            <script>
+                flatpickr("#date", {
+                    position: "below", 
+                    dateFormat: "Y-m-d"
+                });
+            </script>  
+                        
+        </body>
+    </html>
 

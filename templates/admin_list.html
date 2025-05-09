@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8"> 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>List of Activity</title>
     <!-- Font Awesome -->
@@ -24,28 +24,32 @@
         <div class="sidebar bg-white p-20 p-relative">
             <ul>
                 <li>
-                    <a href="{{ url_for('admin_dashboard') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
-                        <i class="fa-solid fa-house"></i>
-                        <span>Dashboard</span>
-                    </a>
+                    <a href="{{ url_for('admin_dashboard', year=request.args.get('year'), month=request.args.get('month')) }}"
+                        class="d-flex align-items-center font-14 p-10 rad-6 color-black {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+                            <i class="fa-solid fa-house"></i>
+                            <span>Dashboard</span>
+                        </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('admin_list') }}" class="active d-flex align-items-center font-14 p-10 rad-6 color-black">
-                        <i class="fa-solid fa-people-group"></i>
-                        <span>Activity</span>
-                    </a>
+                    <a href="{{ url_for('admin_list', year=request.args.get('year'), month=request.args.get('month')) }}"
+                        class="d-flex align-items-center font-14 p-10 rad-6 color-black {% if request.endpoint == 'admin_list' %}active{% endif %}">
+                            <i class="fa-solid fa-people-group"></i>
+                            <span>Activity</span>
+                        </a>
                 </li>
                
                 <li>
-                    <a href="{{ url_for('admin_results')}}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
-                        <i class="fa-solid fa-square-poll-vertical"></i>
-                        <span>Results</span>
-                    </a>
+                    <a href="{{ url_for('admin_results', year=request.args.get('year'), month=request.args.get('month')) }}"
+                        class="d-flex align-items-center font-14 p-10 rad-6 color-black {% if request.endpoint == 'admin_results' %}active{% endif %}">
+                            <i class="fa-solid fa-square-poll-vertical"></i>
+                            <span>Results</span>
+                        </a>
                 </li>
+
                 <li>
-                    <a href="{{ url_for('admin_settings') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
-                        <i class="fa fa-gears"></i>
-                        <span>Settings</span>
+                    <a href="{{ url_for('admin_logout') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                        <i class="fas fa-sign-out-alt fa-fw"></i>
+                        <span>Logout</span>
                     </a>
                 </li>
             </ul>
@@ -65,8 +69,9 @@
                                 
                     <!-- User Info -->
                     <div class="user-info d-flex align-items-center">
-                        <div class="user-img" id="userDropdownToggle">
-                            <img src="{{ admin.profile_image}}" alt="User">
+                        <div class="user-img">
+                            <a href="{{ url_for('admin_profile') }}"> <img src="{{ admin.profile_image}}" alt="User">
+                            </a>
                         </div>
                     </div>
                     
@@ -96,17 +101,23 @@
             <!-- Start Project Table -->
             <div class="m-0 mb-20">
             <div class="projects-table bg-white rad-10 m-10 p-20">
-                <div class="responsive-grid">
-                    {% for activity_name, participants in grouped_activities.items() %}
-                    <div class="activity-card shadow">
-                        <i class="fa-solid fa-people-group"></i>
-                        <h3 class="activity-title">{{ activity_name }}</h3>
-                        <p>Participants: {{ participants|length }} </p>
-                        <div class="button-container">
-                            <button class="btn btn-primary view-activity-btn" data-activity="{{ activity_name | escape }}">View Details</button>
+                <div class="responsive-grid {% if not grouped_activities %}no-activity-message{% endif %}">
+                    {% if grouped_activities %}
+                        {% for activity_name, participants in grouped_activities.items() %}
+                        <div class="activity-card shadow">
+                            <i class="fa-solid fa-people-group"></i>
+                            <h3 class="activity-title">{{ activity_name }}</h3>
+                            <p>Participants: {{ participants|length }} </p>
+                            <div class="button-container">
+                                <button class="btn btn-primary view-activity-btn" data-activity="{{ activity_name | escape }}">View Details</button>
+                            </div>
                         </div>
-                    </div>
-                    {% endfor %}
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-activities-message">
+                            <i class="fa-solid fa-circle-info" style="margin-right: 8px;"></i> No Activity Found
+                        </div>
+                    {% endif %}
                 </div>
             </div>    
         </div>                    
@@ -162,49 +173,84 @@
             }
             
         </script>
+        
         <script>
             document.getElementById("searchInput").addEventListener("input", async function () {
-            let query = this.value.trim();
-            let searchResults = document.getElementById("searchResults");
+                const query = this.value.trim();
+                const activityContainer = document.querySelector(".responsive-grid");
 
-            if (query === "") {
-                searchResults.style.display = "none";
-                return;
-            }
 
-            try {
-                let response = await fetch(`/search_participant?q=${encodeURIComponent(query)}`);
-                let data = await response.json();
-
-                searchResults.innerHTML = "";
-                if (data.length === 0) {
-                    searchResults.innerHTML = "<div>No results found</div>";
-                } else {
-                    data.forEach(participant => {
-                        let div = document.createElement("div");
-                        div.classList.add("search-result");
-                        div.innerHTML = `<strong>${participant.name}</strong> - ${participant.activity_name} <br>
-                                        <small>${participant.venue}, ${participant.school}</small>`;
-                        div.onclick = () => window.location.href = `/view-participant/${participant.id}`;
-                        searchResults.appendChild(div);
-                    });
+                if (query === "") {
+                    activityContainer.innerHTML = `
+                        {% for activity_name, participants in grouped_activities.items() %}
+                            <div class="activity-card shadow">
+                                <i class="fa-solid fa-people-group"></i>
+                                <h3 class="activity-title">{{ activity_name }}</h3>
+                                <p>Participants: {{ participants|length }}</p>
+                                <div class="button-container">
+                                    <button class="btn btn-primary view-activity-btn" data-activity="{{ activity_name | escape }}">View Details</button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    `;
+                    return;
                 }
-                searchResults.style.display = "block";
-            } catch (error) {
-                console.error("Error fetching search results:", error);
-            }
-        });
-
-        // Hide results when clicking outside
-        document.addEventListener("click", function (e) {
-            let searchBox = document.getElementById("searchInput");
-            let searchResults = document.getElementById("searchResults");
-
-            if (!searchBox.contains(e.target) && !searchResults.contains(e.target)) {
-                searchResults.style.display = "none";
-            }
-        });  
-    </script>
+            
+                try {
+                    const response = await fetch(`/search_participant?q=${encodeURIComponent(query)}`);
+                    const data = await response.json();
+            
+                    // Group by activity_name
+                    const grouped = {};
+                    data.forEach(participant => {
+                        if (!grouped[participant.activity_name]) {
+                            grouped[participant.activity_name] = [];
+                        }
+                        grouped[participant.activity_name].push(participant);
+                    });
+            
+                    // Clear existing activity cards
+                    activityContainer.innerHTML = "";
+            
+                    if (Object.keys(grouped).length === 0) {
+                        activityContainer.innerHTML = `
+                            <div class="no-activities-message">
+                                <i class="fa-solid fa-circle-info" style="margin-right: 8px; font-style:italic;"></i> No Activity Found
+                            </div>`;
+                    } else {
+                        for (const [activityName, participants] of Object.entries(grouped)) {
+                            const card = document.createElement("div");
+                            card.className = "activity-card shadow";
+                            card.innerHTML = `
+                                <i class="fa-solid fa-people-group"></i>
+                                <h3 class="activity-title">${activityName}</h3>
+                                <p>Participants: ${participants.length}</p>
+                                <div class="button-container">
+                                    <button class="btn btn-primary view-activity-btn" data-activity="${activityName}">View Details</button>
+                                </div>`;
+                            activityContainer.appendChild(card);
+                        }
+            
+                        // Rebind button clicks
+                        document.querySelectorAll(".view-activity-btn").forEach(button => {
+                            button.addEventListener("click", function () {
+                                const activity = encodeURIComponent(this.dataset.activity);
+                                const urlParams = new URLSearchParams(window.location.search);
+                                const year = urlParams.get("year");
+                                const month = urlParams.get("month");
+            
+                                let targetUrl = `/view-activity?activity_name=${activity}`;
+                                if (year) targetUrl += `&year=${year}`;
+                                if (month) targetUrl += `&month=${month}`;
+                                window.location.href = targetUrl;
+                            });
+                        });
+                    }
+                } catch (error) {
+                    console.error("Error fetching search results:", error);
+                }
+            });
+        </script>
 
         <script> 
             function viewActivity(activityId) {
@@ -230,23 +276,29 @@
             }
         </script>        
 
-        <script>
-            document.querySelectorAll(".view-activity-btn").forEach(button => {
-                button.addEventListener("click", function() {
-                    let activityName = this.getAttribute("data-activity");
-                    viewActivity(activityName);
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const viewButtons = document.querySelectorAll(".view-activity-btn");
+
+            viewButtons.forEach(button => {
+                button.addEventListener("click", function () {
+                    const activity = encodeURIComponent(this.dataset.activity);
+
+                    // Get current URL search parameters (to preserve year/month)
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const year = urlParams.get("year");
+                    const month = urlParams.get("month");
+
+                    let targetUrl = `/view-activity?activity_name=${activity}`;
+                    if (year) targetUrl += `&year=${year}`;
+                    if (month) targetUrl += `&month=${month}`;
+
+                    // Redirect
+                    window.location.href = targetUrl;
                 });
             });
-            
-            function viewActivity(activityName) {
-                console.log("Clicked activity:", activityName);
+        });
+    </script>
 
-               // Encode the activity name properly
-                let encodedActivityName = encodeURIComponent(activityName).replace(/'/g, "%27");
-                console.log("Encoded activity name:", encodedActivityName);
-
-                window.location.href = "/view-activity?activity_name=" + encodedActivityName;
-                }
-        </script>
 </body>
 </html>

@@ -21,33 +21,37 @@
 
 <body>
     <div class="page d-flex">
-        <div class="sidebar bg-white p-20 p-relative">
+        <div class="sidebar bg-white p-20 p-relative" style="font-weight: 600;">
             <ul>
                 <li>
-                    <a href="{{ url_for('admin_dashboard') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
-                        <i class="fa-solid fa-house"></i>
-                        <span>Dashboard</span>
-                    </a>
+                    <a href="{{ url_for('admin_dashboard', year=request.args.get('year'), month=request.args.get('month')) }}"
+                        class="d-flex align-items-center font-14 p-10 rad-6 color-black {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+                            <i class="fa-solid fa-house"></i>
+                            <span>Dashboard</span>
+                        </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('admin_list') }}" class="active d-flex align-items-center font-14 p-10 rad-6 color-black">
-                        <i class="fa-solid fa-people-group"></i>
-                        <span>Activity</span>
-                    </a>
+                    <a href="{{ url_for('admin_list', year=request.args.get('year'), month=request.args.get('month')) }}"
+                        class="d-flex align-items-center font-14 p-10 rad-6 color-black {% if request.endpoint == 'admin_list' %}active{% endif %}">
+                            <i class="fa-solid fa-people-group"></i>
+                            <span>Activity</span>
+                        </a>
                 </li>
                
                 <li>
-                    <a href="{{ url_for('admin_results')}}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
-                        <i class="fa-solid fa-square-poll-vertical"></i>
-                        <span>Results</span>
+                    <a href="{{ url_for('admin_results', year=request.args.get('year'), month=request.args.get('month')) }}"
+                        class="d-flex align-items-center font-14 p-10 rad-6 color-black {% if request.endpoint == 'admin_results' %}active{% endif %}">
+                            <i class="fa-solid fa-square-poll-vertical"></i>
+                            <span>Results</span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="{{ url_for('admin_logout') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                        <i class="fas fa-sign-out-alt fa-fw"></i>
+                        <span>Logout</span>
                     </a>
                 </li>
-                <li>
-                    <a href="{{ url_for('admin_settings') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
-                        <i class="fa fa-gears"></i>
-                        <span>Settings</span>
-                    </a>
-                </li>                
                 
             </ul>
         </div>
@@ -67,27 +71,10 @@
             
                     <!-- User Info -->
                     <div class="user-info d-flex align-items-center">
-                        <div class="user-img" id="userDropdownToggle">
-                            <img src="{{ admin.profile_image}}"  alt="User">
+                        <div class="user-img">
+                            <a href="{{ url_for('admin_profile') }}"> <img src="{{ admin.profile_image}}" alt="User">
+                            </a>
                         </div>
-                    </div>
-
-                    <!-- Dropdown Menu -->
-                    <div id="userDropdown" class="dropdown-menu">
-                        <ul>
-                            <li>
-                                <a href="{{ url_for('admin_profile') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
-                                    <i class="fas fa-user fa-fw"></i>
-                                    <span>Profile</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ url_for('admin_logout') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
-                                    <i class="fas fa-sign-out-alt fa-fw"></i>
-                                    <span>Logout</span>
-                                </a>
-                            </li>
-                        </ul>
                     </div>
                     
                 </div>

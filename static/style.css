@@ -4,7 +4,7 @@
     padding: 0;
     box-sizing: border-box;
     font-family: 'Poppins', sans-serif;
-}
+} 
 
 /* Background */
 body {
@@ -135,12 +135,32 @@ input {
     flex: 1; /* Makes both inputs equal width */
     min-width: 200px; /* Ensures fields don’t get too small */
 }
+
 select, input {
     width: 100%;
 }
 
 .input-group-reason {
     margin-top: 10px;
+}
+
+/* Adjust spacing between month and year in Flatpickr */
+.flatpickr-months .flatpickr-month {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px; /* Adds space between month and year */
+}
+
+.flatpickr-months .flatpickr-month .flatpickr-current-month {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Also ensures spacing between month & year inside the header */
+}
+
+.flatpickr-months .flatpickr-month .flatpickr-monthDropdown-months,
+.flatpickr-months .flatpickr-month .numInputWrapper {
+    margin: 0 5px; /* Optional: fine-tune spacing */
 }
 
 /* Next Button */

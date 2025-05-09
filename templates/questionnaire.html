@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Assessment Questions</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='question.css') }}">
 </head>
@@ -12,7 +11,7 @@
 
         <div class="logo-container">
             <img src="{{ url_for('static', filename='images/STC_Logo.png') }}" alt="Logo 2" class="logo">
-        </div>
+        </div>   
 
         <h2>Evaluation and Feedback Form</h2>
         <p>In order for us to improve future Save the Children activities, please truthfully answer the following questions based on your observations and experience.
@@ -28,51 +27,207 @@
             <span>Please click zero <b>"0" if NOT Applicable.</b></span>
         </p>
     
-        <form method="POST" action="{{ url_for('assessment_questions') }}">
+        <form id="assessmentForm" method="POST" action="{{ url_for('assessment_questions') }}">
             {% for category, questions in questions_by_category.items() %}
                 <div class="category">
                     <div class="header-category"> 
                         <h3 class="category-name">{{ category }}</h3>
-                        <h3 class="rating" style="margin-right:100px;">Rating</h3>
+                        <h3 class="rating" >Rating</h3>
                     </div>
-                    {% for question in questions %} 
-                        <div class="question" >  
-                            <div class="question-text">
-                                <label>{{ question.assessment_text }}</label>
-                            </div>
-                            <div class="options">
-                                <label><input type="radio" name="q{{ question.id }}" value="0" required> 0</label>
-                                <label><input type="radio" name="q{{ question.id }}" value="1"> 1</label>
-                                <label><input type="radio" name="q{{ question.id }}" value="2"> 2</label>
-                                <label><input type="radio" name="q{{ question.id }}" value="3"> 3</label>
-                            </div>
+                    {% for question in questions %}
+                    <div class="question">
+                        <div class="question-text">
+                            <label>{{ question.assessment_text }}</label>
                         </div>
-                        <textarea id="comment" name="comment{{ question.id }}" placeholder="Add your comment..."></textarea>
-                        <div class="border-line"></div>
+                        <div class="options">
+                            {% for value in [0, 1, 2, 3] %}
+                                <label>
+                                    <input type="radio" 
+                                           name="q{{ question.id }}" 
+                                           value="{{ value }}"
+                                           {% if saved_assessment_data.get('q' ~ question.id|string) == value|string %} checked {% endif %}
+                                           required> {{ value }}
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+    
+                    <textarea id="comment" 
+                              name="comment{{ question.id }}" 
+                              placeholder="Add your comment...">{{ saved_assessment_data.get('comment' ~ question.id|string, '') }}</textarea>
+                    <div class="border-line"></div>
                     {% endfor %}
-                    </div>
-                {% endfor %}
+                </div>
+            {% endfor %}
+        
+        <h3>Additional Comments</h3>
 
-                    <h3>Additional Comments</h3>
-
-                    {% for comment in additional_question %}
-                        <div class="additional-question">
-                            <label>{{ comment.additional_question }}</label>
-                        </div>
-                        <input type="text" name="additional_question{{ comment.id }}" class="single-line-input" ></input>
-                    {% endfor %} 
-                                   
-                <div class="buttons" style="align-items: center;">
-                <button type="submit" class="submit-btn">Submit</button>
+        {% for comment in additional_question %}
+            <div class="additional-question">
+                <label>{{ comment.additional_question }}</label>
             </div>
-        </form>
+            <textarea name="additional_question{{ comment.id }}"
+                        class="single-line-input"
+                        placeholder=" ">{{ saved_assessment_data.get('additional_question' ~ comment.id|string, '') }}</textarea>
+        {% endfor %}
+    
+        <div class="buttons" style="align-items: center;">
+            <button type="submit" class="submit-btn">Submit</button>
+        </div>
+    </form>
+</div>
 
-       <script>
+    <script>
         document.querySelector('.submit-btn').addEventListener('click', function () {
             document.querySelector('form').submit();
         });
+    </script>
+
+    <script>
+        // Function to save form data into localStorage
+        function saveFormData() {
+            const formData = {};
+        
+            // Save radio buttons
+            document.querySelectorAll('input[type="radio"]:checked').forEach((input) => {
+                formData[input.name] = input.value;
+            });
+        
+            // Save textareas
+            document.querySelectorAll('textarea').forEach((textarea) => {
+                formData[textarea.name] = textarea.value;
+            });
+        
+            // Save text inputs
+            document.querySelectorAll('input[type="text"]').forEach((input) => {
+                formData[input.name] = input.value;
+            });
+        
+            localStorage.setItem('assessment_form', JSON.stringify(formData));
+        }
+        
+        // Function to restore form data from localStorage
+        function restoreFormData() {
+            const savedData = JSON.parse(localStorage.getItem('assessment_form') || '{}');
+        
+            for (const [name, value] of Object.entries(savedData)) {
+                const input = document.querySelector(`[name="${name}"]`);
+        
+                if (input) {
+                    if (input.type === 'radio') {
+                        const radio = document.querySelector(`input[name="${name}"][value="${value}"]`);
+                        if (radio) {
+                            radio.checked = true;
+                        }
+                    } else if (input.tagName.toLowerCase() === 'textarea' || input.type === 'text') {
+                        input.value = value;
+                    }
+                }
+            }
+        }
+        
+        // Save form automatically when inputs change
+        document.addEventListener('input', saveFormData);
+        
+        // Restore form when page loads
+        document.addEventListener('DOMContentLoaded', restoreFormData);
+        
+        // Optional: Clear saved data after successful submit
+        document.querySelector('form').addEventListener('submit', () => {
+            localStorage.removeItem('assessment_form');
+        });
         </script>
 
-    </div>
-</body>
+        <script>
+            document.getElementById("assessmentForm").addEventListener("submit", function (e) {
+                if (navigator.onLine) {
+                    // ✅ Online: remove saved form data
+                    localStorage.removeItem("assessment_form");
+                    localStorage.removeItem("form_submission_status");
+                    // Allow the form to submit normally
+                } else {
+                    // ❌ Offline: store form data for later
+                    let formData = new FormData(e.target);
+                    let data = {};
+                    formData.forEach((value, key) => {
+                        data[key] = value;
+                    });
+
+                    // Save to localStorage
+                    localStorage.setItem("assessment_form", JSON.stringify(data));
+                    localStorage.setItem("form_submission_status", "pending");
+
+                    // Prevent form from submitting and show alert
+                    e.preventDefault();
+                    alert("Your responses have been saved offline and will be submitted when you're connected to the internet.");
+                }
+            });
+        </script>
+
+        <script>
+            // Periodically check for an internet connection and submit saved data
+            setInterval(function () {
+                if (navigator.onLine) {
+                    // Check if there's any data saved locally
+                    let savedData = localStorage.getItem("assessment_form");
+                    let submissionStatus = localStorage.getItem("form_submission_status");
+
+                    if (savedData && submissionStatus === "pending") {
+                        // Submit the saved data
+                        fetch("/submit_offline_data", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: savedData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            // If data is successfully saved, clear the localStorage
+                            if (data.success) {
+                                localStorage.removeItem("assessment_form");
+                                localStorage.removeItem("form_submission_status");
+                            }
+                        })
+                        .catch(error => console.error("Error submitting offline data:", error));
+                    }
+                }
+            }, 5000); // Check every 5 seconds
+        </script>
+
+        <script>
+            const textareas = document.querySelectorAll('.single-line-input');
+
+            textareas.forEach(textarea => {
+                textarea.addEventListener('input', () => {
+                    textarea.style.height = 'auto'; // Reset height to auto to shrink the textarea
+                    textarea.style.height = (textarea.scrollHeight) + 'px'; // Set height to scrollHeight
+                });
+            });
+        </script>
+
+        <script>
+            document.querySelectorAll('input[type="radio"]').forEach(function (radio) {
+                radio.addEventListener('mousedown', function (e) {
+                    if (this.checked) {
+                        this.wasChecked = true;
+                    } else {
+                        this.wasChecked = false;
+                    }
+                });
+
+                radio.addEventListener('click', function (e) {
+                    if (this.wasChecked) {
+                        this.checked = false;
+                        this.wasChecked = false;
+
+                        // Optional: trigger change event for localStorage save
+                        let event = new Event('input', { bubbles: true });
+                        this.dispatchEvent(event);
+                    }
+                });
+            });
+        </script>
+
+    </body>
 </html>

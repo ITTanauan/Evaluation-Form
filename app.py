@@ -2,25 +2,28 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
-import json
-import uuid
-import mysql.connector
-from datetime import datetime 
+from datetime import datetime, date as current_date 
 from collections import defaultdict
-import urllib.parse
-import pandas as pd
-import io
 from xlsxwriter import Workbook
 from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas 
-from sqlalchemy.orm import joinedload
-import os
+from sqlalchemy import extract
 from reportlab.lib.units import inch
 from werkzeug.utils import secure_filename
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from pytz import timezone, utc
+from urllib.parse import urljoin
+from math import ceil
+import json
+import uuid
+import urllib.parse
+import pandas as pd 
+import io
+import qrcode
+import os
+import socket
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -41,7 +44,7 @@ migrate = Migrate(app, db)
 
 UPLOAD_FOLDER = 'static/uploads/'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER   
 
 # Ensure the upload folder exists
 if not os.path.exists(UPLOAD_FOLDER):
@@ -50,17 +53,19 @@ if not os.path.exists(UPLOAD_FOLDER):
 # Define Participants Model
 class Participants(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
+    name = db.Column(db.String(100), nullable=True)
     activity_name = db.Column(db.String(255), nullable=True)
-    venue = db.Column(db.String(200), nullable=False)
-    school = db.Column(db.String(200), nullable=False)
-    district = db.Column(db.String(200), nullable=False)
-    facilitator_name = db.Column(db.String(100), nullable=False)
-    address = db.Column(db.String(200), nullable=False)
-    date = db.Column(db.Date, nullable=False)
+    venue = db.Column(db.String(200), nullable=True)
+    school = db.Column(db.String(200), nullable=True)
+    district = db.Column(db.String(200), nullable=True)
+    facilitator_name = db.Column(db.String(100), nullable=True)
+    address = db.Column(db.String(200), nullable=True)
+    date = db.Column(db.Date, nullable=True)
+    admin_id = db.Column(db.Integer, db.ForeignKey('admin.id'), nullable=False)
 
     comments = db.relationship('CommentResponse', backref='participant', cascade="all, delete", lazy=True)
     assessments = db.relationship('AssessmentResponse', backref='participant', cascade="all, delete", lazy=True)
+    admin = db.relationship('Admin', backref='participants')
 
 class Assessment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -217,45 +222,106 @@ def admin_dashboard():
         return redirect(url_for('admin'))
 
     admin = Admin.query.filter_by(username=session['admin']).first()
-    participants = Participants.query.all()
-    total_participants = db.session.query(Participants).count()  
+    if not admin:
+        session.pop('admin', None)
+        flash('Admin not found or session expired. Please log in again.', 'danger')
+        return redirect(url_for('admin'))
 
-    # Get unread user responses
-    activities = db.session.query(Participants.activity_name).distinct().all()
-    total_activities = db.session.query(Participants.activity_name).distinct().count()
+    # 🛠 Try to read from URL first
+    selected_year = request.args.get('year')
+    selected_month = request.args.get('month')
 
+    # 🛠 If user submitted new filter
+    if selected_year is not None:
+        if selected_year == "":
+            session.pop('selected_year', None)   # Clear year filter if "All" selected
+            selected_year = None
+        else:
+            selected_year = int(selected_year)
+            session['selected_year'] = selected_year
+    else:
+        selected_year = session.get('selected_year')
+
+    if selected_month is not None:
+        if selected_month == "":
+            session.pop('selected_month', None)  # Clear month filter if "All" selected
+            selected_month = None
+        else:
+            selected_month = int(selected_month)
+            session['selected_month'] = selected_month
+    else:
+        selected_month = session.get('selected_month')
+
+    # Base query
+    participant_query = Participants.query.filter_by(admin_id=admin.id)
+    if selected_year:
+        participant_query = participant_query.filter(extract('year', Participants.date) == selected_year)
+    if selected_month:
+        participant_query = participant_query.filter(extract('month', Participants.date) == selected_month)
+
+    participants = participant_query.all()
+    total_participants = participant_query.count()
+
+    activities = db.session.query(Participants.activity_name)\
+        .filter_by(admin_id=admin.id)
+    if selected_year:
+        activities = activities.filter(extract('year', Participants.date) == selected_year)
+    if selected_month:
+        activities = activities.filter(extract('month', Participants.date) == selected_month)
+    activities = activities.distinct().all()
+
+    total_activities = len(activities)
     activities = [{"activity_name": activity[0]} for activity in activities]
 
-    # 🔹 Count ratings (initialize counts for 0, 1, 2, 3)
+    participant_ids = [p.id for p in participants]
+
+    assessments = AssessmentResponse.query.filter(
+        AssessmentResponse.participant_id.in_(participant_ids)
+    ).all()
+
     rating_counts = {0: 0, 1: 0, 2: 0, 3: 0}
     total_responses = 0
-
-    assessments = AssessmentResponse.query.all()
-    for assessment in assessments:
+    for assessment in assessments: 
         try:
             rating = int(assessment.response)
             if rating in rating_counts:
                 rating_counts[rating] += 1
                 total_responses += 1
         except ValueError:
-            continue  # Skip invalid ratings
-
-    # 🔹 Compute percentages (avoid division by zero)
+            continue
+        
+    has_rating_data = total_responses > 0
+    
     rating_percentages = {
         key: (count / total_responses * 100) if total_responses > 0 else 0
         for key, count in rating_counts.items()
     }
 
-    for i in range(4):  
+    for i in range(4):
         rating_percentages.setdefault(i, 0)
+
+    years = db.session.query(extract('year', Participants.date)).distinct().order_by(extract('year', Participants.date)).all()
+    years = [int(y[0]) for y in years if y[0] is not None]
+
+    local_ip = get_local_ip()
+    dynamic_link = urljoin(f"http://{local_ip}:5001/", f"participant?admin_id={admin.id}")
 
     return render_template(
         'admin_dashboard.html',
-        admin=admin,participants=participants,  total_participants=total_participants, total_activities=total_activities, rating_percentages=rating_percentages,
-        activities=activities
+        admin=admin,
+        participants=participants,
+        total_participants=total_participants,
+        total_activities=total_activities,
+        rating_percentages=rating_percentages,
+        has_rating_data=has_rating_data,
+        activities=activities,
+        years=years,
+        dynamic_link=dynamic_link,
+        selected_year=selected_year,
+        selected_month=selected_month
     )
 
-#Admin Activity List
+#Admin Activity List of Activity
 @app.route('/admin/list')
 def admin_list():
     if 'admin' not in session:
@@ -263,9 +329,17 @@ def admin_list():
         return redirect(url_for('admin'))
 
     admin = Admin.query.filter_by(username=session['admin']).first()
+
+    selected_year = request.args.get('year', type=int)
+    selected_month = request.args.get('month', type=int)
     
-    participants = Participants.query.all()  # Fetch all users
-    assessment_responses = AssessmentResponse.query.all()
+    participant_query = Participants.query.filter_by(admin_id=admin.id)
+    if selected_year:
+        participant_query = participant_query.filter(extract('year', Participants.date) == selected_year)
+    if selected_month:
+        participant_query = participant_query.filter(extract('month', Participants.date) == selected_month)
+
+    participants = participant_query.all()
 
     grouped_activities = defaultdict(list)
     for participant in participants:
@@ -275,34 +349,53 @@ def admin_list():
         'admin_list.html',
         admin=admin,
         participants=participants,  
-        assessment_responses=assessment_responses,
-        grouped_activities=grouped_activities
+        grouped_activities=grouped_activities,
+        selected_year=selected_year,
+        selected_month=selected_month
     )
 
-#View Activity
 @app.route('/view-activity')
 def view_activity():
     activity_name = request.args.get("activity_name")
+    selected_year = request.args.get('year', type=int)
+    selected_month = request.args.get('month', type=int)
     admin = Admin.query.filter_by(username=session['admin']).first()
+    page = int(request.args.get('page', 1))
+    per_page = 10
 
-    # Decode the URL-encoded activity name
     if activity_name:
         try:
-            # Decode the URL-encoded string
             activity_name = urllib.parse.unquote(activity_name)
-            print(f"Decoded activity_name: {activity_name}")
         except Exception as e:
-            print("Error decoding activity name:", e)
             return "Invalid activity name", 400
-        
+
     if not activity_name:
         return "Activity not found", 404
-    
-    # Get all participants in the same activity
-    participants = Participants.query.filter_by(activity_name=activity_name).all()
-    print(f"Received activity_name: {activity_name}")
 
-    return render_template("view_activity.html", activity_name=activity_name, participants=participants, admin=admin)
+    # Initial query
+    participants_query = Participants.query.filter_by(activity_name=activity_name, admin_id=session['id'])
+
+    # Apply year/month filters BEFORE pagination
+    if selected_year:
+        participants_query = participants_query.filter(extract('year', Participants.date) == selected_year)
+    if selected_month:
+        participants_query = participants_query.filter(extract('month', Participants.date) == selected_month)
+
+    # Count total after filtering
+    total = participants_query.count()
+    total_pages = ceil(total / per_page)
+
+    # Apply pagination AFTER filtering
+    participants = participants_query.offset((page - 1) * per_page).limit(per_page).all()
+
+    return render_template("view_activity.html", 
+                           activity_name=activity_name, 
+                           participants=participants, 
+                           admin=admin,
+                           selected_year=selected_year,
+                           selected_month=selected_month,  
+                           page=page, 
+                           total_pages=total_pages)
 
 #Export File
 @app.route('/export', methods=['GET'])
@@ -314,7 +407,7 @@ def export():
         return "Activity parameter is required", 400
 
     # Query database for participant data
-    participants = Participants.query.filter_by(activity_name=activity_name).all()
+    participants = Participants.query.filter_by(activity_name=activity_name, admin_id=session['id']).all()
 
     if not participants:
         return "No participants found from the activity", 404
@@ -455,10 +548,41 @@ def export_pdf(participants, activity_name):
     
     output = io.BytesIO()
     doc = SimpleDocTemplate(output, pagesize=letter, 
-                            leftMargin=58, rightMargin=58, 
-                            topMargin=70, bottomMargin=40)
+                            leftMargin=40, rightMargin=40, 
+                            topMargin=30, bottomMargin=40)
     elements = []
     styles = getSampleStyleSheet()
+
+    # Custom styles with font size 12
+    font12_style = ParagraphStyle(
+        name="Font12",
+        parent=styles["Normal"],
+        fontSize=10,
+        leading=18,        
+    )
+
+    font12_centered = ParagraphStyle(
+        name="Font14Centered",
+        parent=font12_style,
+        alignment=TA_CENTER
+    )
+
+    instructions_style = ParagraphStyle(
+        name="InstructionsStyle",
+        fontSize=10,
+        leading=18,    
+        parent=font12_style,
+        alignment=TA_JUSTIFY
+    )
+
+    category_header_style = ParagraphStyle(
+        name="CategoryHeaderStyle",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold", 
+        fontSize=13,
+        alignment=TA_CENTER,
+        leading=14
+    )
 
     # Define logo path at the start
     logo_path = "static/images/STC_Logo.png"  
@@ -467,14 +591,15 @@ def export_pdf(participants, activity_name):
     instructions = Paragraph(
         """
         <p>In order for us to improve future Save the Children activities, please truthfully answer the following questions based on your observations and experience.</p>
-        <p><b>Using the scale of 1 to 3 where:</b></p>
+        <p>Using the scale of 1 to 3 where </p>
             <ul>
-                <li><b>1</b> - DISAGREE</li>
-                <li><b>2</b> - NEUTRAL</li>
-                <li><b>3</b> - AGREE</li>
+                <li><b>1</b> is DISAGREE, </li>
+                <li><b>2</b> is NEUTRAL, </li>
+                <li><b>3</b> is AGREE, </li>
             </ul>
-            <p>Please click zero <b>0</b> if NOT Applicable.</p>
-            """, styles["Normal"]
+            <p> kindly type the number that best correspond to your feedback and add comments as needed.</p>
+            <p> Please click zero <b>"0" if NOT Applicable.</b></p>
+            """, instructions_style
     )
 
     category_mapping = {
@@ -489,57 +614,78 @@ def export_pdf(participants, activity_name):
         if index > 0:
             elements.append(PageBreak())  # Add a page break for each new participant
 
-        # Add logo (AFTER defining logo_path)
-        if os.path.exists(logo_path):
-            logo = Image(logo_path, width=90, height=90)  # Adjust logo size as needed
-            elements.append(logo)
-            elements.append(Spacer(1, 12))  # Add spacing below the logo
-        else:
-            print(f"Warning: Logo not found at {logo_path}")  # Log missing logo instead of raising error
-
         title_style = ParagraphStyle(
             name="CustomTitle",
             fontName="Helvetica-Bold", 
-            fontSize=18,               
-            alignment=TA_CENTER,       
+            fontSize=16,               
+            alignment=TA_LEFT,       
             spaceAfter=14,            
-            leading=24
+            leading=15
         )
 
-        # Title
-        title = Paragraph(f"<b>Evaluation and Feedback for {activity_name}</b>", title_style)
+        # Title and Logo side by side
+        if os.path.exists(logo_path):
+            logo = Image(logo_path, width=150, height=40)
+        else:
+            logo = Paragraph("", title_style)  
 
-        header_table = Table([[logo, title]], colWidths=[100, 400])  # Adjust widths as needed
+        title = Paragraph("<b>EVALUATION AND FEEDBACK FORM</b>", title_style)
 
-        # Apply table style (align logo to the left and title to the center)
+        header_table = Table([[title, logo]], colWidths=[424.6, 101]) 
         header_table.setStyle(TableStyle([
-            ("VALIGN", (0, 0), (-1, -1), "TOP"),  # Align items to the top
-            ("ALIGN", (0, 0), (0, 0), "LEFT"),  # Align logo to the left
-            ("ALIGN", (1, 0), (1, 0), "CENTER"),  # Align title to the center
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("ALIGN", (0, 0), (0, 0), "LEFT"),    
+                ("ALIGN", (1, 0), (1, 0), "RIGHT"),  
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),  
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("TOPPADDING", (0, 0), (-1, -1), 10),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ("MARGIN", (0, 0), (-1, -1), 10), 
+            ]))
+
+        elements.append(header_table)
+        elements.append(Spacer(1, 3)) 
+        
+        # Participant Info
+        participant_data = [
+            [Paragraph(f"<b>Participant:</b> {participant.name}", font12_style),
+            Paragraph(f"<b>Date:</b> {participant.date}", font12_style)],
+            
+            [Paragraph(f"<b>Activity:</b> {participant.activity_name or 'N/A'}", font12_style),
+            Paragraph(f"<b>Venue:</b> {participant.venue}", font12_style)],
+            
+            [Paragraph(f"<b>School:</b> {participant.school}", font12_style),
+            Paragraph(f"<b>District:</b> {participant.district}", font12_style)],
+            
+            [Paragraph(f"<b>Facilitator:</b> {participant.facilitator_name}", font12_style),
+            Paragraph(f"<b>Barangay/Municipal:</b> {participant.address}", font12_style)],
+        ]
+        
+        participant_table = Table(participant_data, colWidths=[4 * inch, 3.25 * inch])
+        participant_table.setStyle(TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 0),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 0),  # Apply uniform bottom padding for all rows
+            ("BOTTOMPADDING", (0, 1), (-1, -1), 0),  # Apply a different bottom padding to the second row, for example
+            ("BOTTOMPADDING", (0, 2), (-1, -1), 0),  # Adjust for the third row
+            ("BOTTOMPADDING", (0, 3), (-1, -1), 10),  # Adjust for the fourth row
         ]))
 
-        elements.append(title)
-        elements.append(Spacer(1, 12))  # Spacing
+        elements.append(participant_table)
+        elements.append(Spacer(1, 3))
 
-        # Instructions
-        elements.append(instructions)
-        elements.append(Spacer(1, 12))  # Spacing
-
-        # Participant Info
-        participant_info = Paragraph(
-            f"<b>Participant:</b> {participant.name}<br/>" 
-            f"<b>Date:</b> {participant.date} <br/>"
-            f"<b>Venue:</b> {participant.venue} <br/>"
-            f"<b>School:</b> {participant.school} <br/>" 
-            f"<b>District:</b> {participant.district} <br/>"
-            f"<b>Facilitator:</b> {participant.facilitator_name} <br/>"
-            f"<b>Barangay/Municipal:</b> {participant.address} <br/>", 
-            styles["Normal"]
-        )
-        elements.append(participant_info)
-        elements.append(Spacer(1, 12))  # Space before table
-
-        centered_style = ParagraphStyle(name="Centered", parent=styles["Normal"], alignment=TA_CENTER)
+        instructions_table = Table([[instructions]], colWidths=[7.30 * inch])  # 6.5 = 8.5 inch page - (45*2 margin in points)
+        instructions_table.setStyle(TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 0),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+            ("TOPPADDING", (0, 0), (-1, -1), 0),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 2),  # 👈 controls bottom padding here
+        ]))
+        elements.append(instructions_table)
+        elements.append(Spacer(1, 9)) 
 
         # Get responses
         responses = AssessmentResponse.query.filter_by(participant_id=participant.id).all()
@@ -552,64 +698,95 @@ def export_pdf(participants, activity_name):
             if assessment:
                 category_name = category_mapping.get(assessment.category, assessment.category)
                 category_dict.setdefault(category_name, []).append([
-                    Paragraph(assessment.assessment_text, styles["Normal"]),
-                    Paragraph(str(response.response), centered_style),
-                    Paragraph(response.comment if response.comment else "N/A", centered_style)
+                    Paragraph(assessment.assessment_text, font12_style),
+                    Paragraph(str(response.response), font12_centered),
+                    Paragraph(response.comment if response.comment else "N/A", font12_centered)
                 ])
 
         # Create table
         table_data = []
         table_styles = [
             ("GRID", (0, 0), (-1, -1), 1, colors.black),
-            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
             ("ALIGN", (1, 0), (1, -1), "CENTER"),  # Center align Rating
             ("ALIGN", (2, 0), (2, -1), "CENTER"),  # Center align Comments
             ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            
+            # Add padding to assessment_text column (column 0)
+            ("LEFTPADDING", (0, 0), (0, -1), 10),
+            ("RIGHTPADDING", (0, 0), (0, -1), 10),
+            ("TOPPADDING", (0, 0), (0, -1), 7),
+            ("BOTTOMPADDING", (0, 0), (0, -1), 7),
         ]
 
         for category, questions in category_dict.items():
-            table_data.append([f"{category}", "Rating", "Comment"])
-            table_styles.append(("BACKGROUND", (0, len(table_data)-1), (2, len(table_data)-1), colors.lightblue))
-            table_styles.append(("FONTNAME", (0, len(table_data)-1), (2, len(table_data)-1), "Helvetica-Bold"))
-            table_styles.append(("ALIGN", (0, len(table_data)-1), (2, len(table_data)-1), "CENTER"))
+            table_data.append([
+                Paragraph(category, category_header_style),
+                Paragraph("Rating", category_header_style),
+                Paragraph("Comment", category_header_style)
+            ])
+            
+            header_row_index = len(table_data) - 1  # Track index of the current header row
+
+            # Style for the header row
+            table_styles += [
+                ("FONTNAME", (0, header_row_index), (2, header_row_index), "Helvetica-Bold"),
+                ("ALIGN", (0, header_row_index), (0, header_row_index), "LEFT"),  # Align category header left
+                ("ALIGN", (1, header_row_index), (2, header_row_index), "CENTER"),
+                ("VALIGN", (0, header_row_index), (2, header_row_index), "MIDDLE"),
+                ("ROWHEIGHT", (0, header_row_index), (2, header_row_index), 32), 
+            ]
 
             for row in questions:
                 table_data.append(row)
 
-        table = Table(table_data, colWidths=[3.8 * inch, 1 * inch, 2.2 * inch])  # Adjust column widths
+        table = Table(table_data, colWidths=[3.9 * inch, 1 * inch, 2.3 * inch])  # Adjust column widths
         table.setStyle(TableStyle(table_styles))
 
         elements.append(table)
-        elements.append(Spacer(1, 24))  # Space before next section
+        elements.append(Spacer(1, 0))  # Space before next section
 
         # Additional Comments
-        if additional_responses:
-            elements.append(Paragraph("<b>Additional Comments</b>", styles["Heading2"]))
-            elements.append(Spacer(1, 12))
+        additional_header_style = ParagraphStyle(
+            name="AdditionalHeaderStyle",
+            parent=styles["Normal"],
+            fontName="Helvetica-Bold",
+            fontSize=12,
+            alignment=TA_LEFT,
+            leading=14
+        )
 
-            additional_table_data = [["Additional Question", "Response"]]
+        if additional_responses:
+            # One-column table header
+            additional_table_data = [[
+                Paragraph("Additional Question", additional_header_style)
+            ]]
+
             additional_table_styles = [
                 ("GRID", (0, 0), (-1, -1), 1, colors.black),
-                ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
                 ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
                 ("ALIGN", (0, 0), (-1, 0), "CENTER"),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("TOPPADDING", (0, 0), (-1, -1), 6),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
             ]
 
             for add_response in additional_responses:
                 additional_question = AdditionalComment.query.filter_by(id=add_response.additional_comment_id).first()
                 if additional_question:
+                    combined_text = f"{additional_question.additional_question}<br/><b>{add_response.comment_response}</b>"
                     additional_table_data.append([
-                        Paragraph(additional_question.additional_question, styles["Normal"]),
-                        Paragraph(add_response.comment_response, centered_style)
+                        Paragraph(combined_text, font12_style)
                     ])
 
-            additional_table = Table(additional_table_data, colWidths=[3.4 * inch, 3.4 * inch])
+            additional_table = Table(additional_table_data, colWidths=[7.2 * inch])  # Single wide column
             additional_table.setStyle(TableStyle(additional_table_styles))
 
             elements.append(additional_table)
             elements.append(Spacer(1, 24))  # Space before next section
-
+    
     doc.build(elements)
     output.seek(0)
     return send_file(output, download_name="assessment_report.pdf", as_attachment=True, mimetype="application/pdf")
@@ -617,23 +794,45 @@ def export_pdf(participants, activity_name):
 #View Total Participnats
 @app.route('/view-total-participant')
 def view_total_participant():
-    activity_name = request.args.get("activity_name")
-    admin = Admin.query.filter_by(username=session['admin']).first()
+    if 'admin' not in session:
+        flash('Please log in first.', 'danger')
+        return redirect(url_for('admin'))
 
+    activity_name = request.args.get("activity_name")
+    selected_year = request.args.get('year', type=int)
+    selected_month = request.args.get('month', type=int)
+    page = int(request.args.get('page', 1))
+    per_page = 10
+
+    admin = Admin.query.filter_by(username=session['admin']).first()
     if activity_name:
         activity_name = urllib.parse.unquote(activity_name)
 
-    # If no specific activity is provided, show all participants
-    if activity_name == "all":
-        participants = Participants.query.all()
-        activity_name = "All Activities"
-    else:
-        participants = Participants.query.filter_by(activity_name=activity_name).all()
+    participant_query = Participants.query.filter_by(admin_id=admin.id)
 
-    if not participants:
-        return f"No participants found for {activity_name}", 404
+    if activity_name != "all":
+        participant_query = participant_query.filter_by(activity_name=activity_name)
 
-    return render_template("view_total_participant.html", activity_name=activity_name, participants=participants, admin=admin)
+    if selected_year:
+        participant_query = participant_query.filter(extract('year', Participants.date) == selected_year)
+    if selected_month:
+        participant_query = participant_query.filter(extract('month', Participants.date) == selected_month)
+
+    total = participant_query.count()
+    total_pages = ceil(total / per_page)
+
+    participants = participant_query.offset((page - 1) * per_page).limit(per_page).all()
+    activity_name_display = "All Activities" if activity_name == "all" else activity_name
+
+    return render_template("view_total_participant.html",
+                           activity_name=activity_name_display,
+                           participants=participants,
+                           admin=admin,
+                           page=page,
+                           total_pages=total_pages,
+                           selected_year=selected_year,
+                           selected_month=selected_month,
+                           activity_filter=activity_name)
 
 @app.route('/delete-participant/<int:participant_id>', methods=['POST'])
 def delete_participant(participant_id):
@@ -680,41 +879,52 @@ def view_participant(participant_id):
     return render_template(
         'view_participant.html', participant=participant, responses=responses, additional_responses=additional_responses, admin=admin)
 
-@app.route('/admin/settings')
-def admin_settings():
+@app.route('/admin/profile')
+def admin_profile():
+    # Check for session
     if 'admin' not in session:
         flash('Please log in first.', 'danger')
         return redirect(url_for('admin'))
 
+    # Get admin by session username
     admin = Admin.query.filter_by(username=session['admin']).first()
-    participants = Participants.query.all()
-# Get the most recent 5 logins
-    recent_logins = AdminLoginActivity.query.filter_by(admin_id=admin.id)\
-                        .order_by(AdminLoginActivity.timestamp.desc())\
-                        .limit(5).all()
 
-    # Get ALL login activity
+    # If not found (just in case session is invalid or manually tampered)
+    if not admin:
+        session.pop('admin', None)
+        flash('Admin session expired or user not found.', 'warning')
+        return redirect(url_for('admin'))
+
+    participants = Participants.query.all()
+
+    # Define local timezone
+    local_tz = timezone('Asia/Manila')
+
+    # Safely convert timestamps to local time
+    def to_local(dt):
+        if dt.tzinfo is None:
+            return utc.localize(dt).astimezone(local_tz)
+        return dt.astimezone(local_tz)
+
+    recent_logins = AdminLoginActivity.query.filter_by(admin_id=admin.id)\
+        .order_by(AdminLoginActivity.timestamp.desc())\
+        .limit(5).all()
+    for login in recent_logins:
+        login.timestamp = to_local(login.timestamp)
+
     all_logins = AdminLoginActivity.query.filter_by(admin_id=admin.id)\
-                    .order_by(AdminLoginActivity.timestamp.desc()).all()
+        .order_by(AdminLoginActivity.timestamp.desc()).all()
+    for login in all_logins:
+        login.timestamp = to_local(login.timestamp)
 
     return render_template(
-        'admin_settings.html',
+        'admin_profile.html',
         admin=admin,
         participants=participants,
+        current_time=datetime.now().timestamp(),
         recent_logins=recent_logins,
         all_logins=all_logins
     )
-
-@app.route('/admin/profile')
-def admin_profile():
-    if 'admin' not in session:
-        flash('Please log in first.', 'danger')
-        return redirect(url_for('admin'))
-
-    admin = Admin.query.filter_by(username=session['admin']).first()
-    participants = Participants.query.all()
-
-    return render_template('admin_profile.html', admin=admin, participants=participants, current_time=datetime.now().timestamp())
 
 @app.route('/admin/messages')
 def admin_messages():
@@ -743,49 +953,58 @@ def edit_admin_profile():
     admin.email = request.form['email']
     admin.phone = request.form['phone']
 
+    profile_picture_updated = False
+
     # Handle profile picture upload
     if 'profile_picture' in request.files:
         file = request.files['profile_picture']
 
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        
-        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)  # Ensure directory exists
-        file.save(file_path)
+        if file and file.filename != "" and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
-        admin.profile_image = f"/static/uploads/{filename}"  # Save path in DB
+            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+            file.save(file_path)
 
-        print("Saved profile picture path:", admin.profile_image)  # Debugging print
+            admin.profile_image = f"/static/uploads/{filename}"
+            profile_picture_updated = True
+            print("Saved profile picture path:", admin.profile_image)
 
     try:
         db.session.commit()
-        return jsonify({"success": True, "profile_picture": admin.profile_image})
+        if profile_picture_updated:
+            return jsonify({"success": True, "profile_picture": admin.profile_image})
+        else:
+            return jsonify({"success": True})
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "message": str(e)}), 500
-
+        
 @app.route('/admin/results')
 def admin_results():
     if 'admin' not in session:
         flash('Please log in first.', 'danger')
         return redirect(url_for('admin'))
     
+    selected_year = request.args.get('year', type=int)
+    selected_month = request.args.get('month', type=int)
+
     admin = Admin.query.filter_by(username=session['admin']).first()
     
-    try:
-        assessments = AssessmentResponse.query.all()
-        print(f"Fetched {len(assessments)} assessments")  # Debugging
-    except Exception as e:
-        print("Database error:", e)
-        return "Database connection failed"
+    participant_query = Participants.query.filter_by(admin_id=admin.id)
+    if selected_year:
+        participant_query = participant_query.filter(extract('year', Participants.date) == selected_year)
+    if selected_month:
+        participant_query = participant_query.filter(extract('month', Participants.date) == selected_month)
+
+    participant_ids = [p.id for p in participant_query.all()]
+    assessments = AssessmentResponse.query.filter(AssessmentResponse.participant_id.in_(participant_ids)).all()
 
     categories = [
         "About the topic/s", "About the materials", "About the facilitator/s",
         "About the food and venue", "About Save The Children Staff Support"
     ]
 
-    # Store ratings per category with question numbers
     category_data = {category: [] for category in categories}
 
     for assessment in assessments:
@@ -793,19 +1012,19 @@ def admin_results():
             try:
                 category_data[assessment.category].append({
                     "question_number": assessment.assessment_number,
-                    "rating": int(assessment.response)  # Ensure it's an int
+                    "rating": int(assessment.response)
                 })
             except ValueError:
                 print(f"Invalid response value for {assessment.assessment_number}")
-           
-    print("Category Data:", category_data)
 
-    return render_template( 'admin_results.html', admin=admin, category_data=category_data)
+    return render_template('admin_results.html', admin=admin, category_data=category_data)
 
 # Admin Logout
 @app.route('/admin/logout')
 def admin_logout():
     session.pop('admin', None)
+    session.pop('selected_year', None)
+    session.pop('selected_month', None) 
     flash('Logged out successfully.', 'info')
     return redirect(url_for('admin'))
 
@@ -815,7 +1034,15 @@ def instructions():
 
 @app.route('/participant', methods=['GET', 'POST'])
 def participant():
+    admin_id = request.args.get('admin_id', type=int)
+    if admin_id:
+        session['admin_id'] = admin_id
+    else:
+        admin_id = session.get('admin_id')
+        
     if request.method == 'POST':
+        session['participant_form'] = request.form.to_dict()
+
         try:
             name = request.form['name']
             activity_name = request.form['activity_name']
@@ -825,8 +1052,15 @@ def participant():
             facilitator_name = request.form['facilitator_name']
             address = request.form['address']
             date_str = request.form['date']
-            date = datetime.strptime(date_str, '%Y-%m-%d').date()
             
+            # If date is not filled in, use today's date
+            if not date_str:
+                date = current_date.today()
+            else:
+                date = datetime.strptime(date_str, '%Y-%m-%d').date()
+
+            admin_id = request.form.get('admin_id') or admin_id
+
             new_participant = Participants(
                 name=name,
                 activity_name=activity_name,
@@ -835,29 +1069,32 @@ def participant():
                 district=district,
                 facilitator_name=facilitator_name,
                 address=address,
-                date=date
+                date=date,
+                admin_id=admin_id
             )
 
             db.session.add(new_participant)
             db.session.commit()
 
-             # ✅ Store user ID in session for assessment_questions route
             session['participant_id'] = new_participant.id
-
-            print("✅ Data saved successfully!")  # Debugging line
-
-            # Redirect to child form after submission
+            session.pop('participant_form', None)
             return redirect(url_for('assessment_questions'))
 
         except Exception as e:
-            print(f"❌ Error inserting data: {e}")  # Debugging line
+            print(f"❌ Error inserting data: {e}")
 
-    return render_template("assessment.html")
+    saved_data = session.get('participant_form', {})
+    return render_template("assessment.html", admin_id=admin_id, saved_data=saved_data)
 
 @app.route('/assessment_questions', methods=['GET', 'POST'])
 def assessment_questions():
     participant_id = session.get('participant_id')
-
+    admin_id = request.args.get('admin_id', type=int)
+    if admin_id:
+        session['admin_id'] = admin_id
+    else:
+        admin_id = session.get('admin_id')
+        
     if not participant_id:
         flash("Please enter your details first.", "warning")
         return redirect(url_for('participant'))
@@ -872,6 +1109,7 @@ def assessment_questions():
     additional_questions = db.session.query(AdditionalComment).all()
 
     if request.method == 'POST':
+        session['assessment_form'] = request.form.to_dict()
         try:
             responses_saved = False  
 
@@ -908,7 +1146,9 @@ def assessment_questions():
             if responses_saved:
                 db.session.commit()  # Save responses to DB
                 session.pop('current_assessment_number', None)  # Clear session variable
-                return redirect(url_for('thank_you'))  # Redirect to Thank You page
+                session.pop('assessment_form', None)  # Clear the assessment form data
+                admin_id = session.get('admin_id')
+                return redirect(url_for('thank_you', admin_id=admin_id))
         
         except Exception as e:
             db.session.rollback()
@@ -916,26 +1156,108 @@ def assessment_questions():
 
     # Retrieve the current question
     assessment = db.session.query(Assessment).filter_by(id=current_assessment_number).first()
+    saved_assessment_data = session.get('assessment_form', {})
 
     return render_template('questionnaire.html', 
                            assessment=assessment, 
                            is_last_question=is_last_question, 
-                           questions_by_category=questions_by_category, additional_question=additional_questions)
+                           questions_by_category=questions_by_category, 
+                           additional_question=additional_questions, 
+                           saved_assessment_data=saved_assessment_data)
+
+@app.route('/submit_offline_data', methods=['POST'])
+def submit_offline_data():
+    try:
+        # Parse the incoming data
+        data = request.get_json()
+
+        # You would extract the relevant fields from 'data' and save it to the database
+        name = data.get('name')
+        activity_name = data.get('activity_name')
+        venue = data.get('venue')
+        school = data.get('school')
+        district = data.get('district')
+        facilitator_name = data.get('facilitator_name')
+        address = data.get('address')
+        date_str = data.get('date')
+        date = datetime.strptime(date_str, '%Y-%m-%d').date()
+
+        new_participant = Participants(
+            name=name,
+            activity_name=activity_name,
+            venue=venue,
+            school=school,
+            district=district,
+            facilitator_name=facilitator_name,
+            address=address,
+            date=date,
+            admin_id=None  # Or set this based on session or another value
+        )
+
+        db.session.add(new_participant)
+        db.session.commit()
+
+        # If submission is successful, return a success message
+        return jsonify({"success": True})
+
+    except Exception as e:
+        print(f"Error saving offline data: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+    
+def get_local_ip():
+    # Get the local machine's IP address
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.settimeout(0)
+    try:
+        # Connect to an external server to determine the local IP address
+        s.connect(('10.254.254.254', 1))  # Arbitrary external address
+        local_ip = s.getsockname()[0]
+    except Exception:
+        local_ip = '127.0.0.1'  # Default to localhost if error
+    finally:
+        s.close()
+    return local_ip
+
+@app.route('/generate_qr_image')
+def generate_qr_image():
+    if 'admin' not in session:
+        return "Unauthorized", 403
+
+    admin_id = session['id']
+
+    # Get the local IP dynamically
+    local_ip = get_local_ip()
+
+    # Use the local IP to build the URL
+    url = f"http://{local_ip}:5001/participant?admin_id={admin_id}"
+
+    # Generate QR code
+    img = qrcode.make(url)
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    buf.seek(0)
+
+    return send_file(buf, mimetype='image/png')
 
 @app.route('/search_participant', methods=['GET'])
 def search_participant():
     query = request.args.get("q", "").strip()
+    admin_id = session.get("id")
 
     if not query:
-        return jsonify([])  # Return empty list if query is empty
+        return jsonify([])
 
-    # Search for participants by name or activity
+    if not admin_id:
+        # Optionally log this
+        print("No admin_id in session")
+        return jsonify([])  # Or return an error
+
     participants = Participants.query.filter(
-        (Participants.name.ilike(f"%{query}%")) | 
-        (Participants.activity_name.ilike(f"%{query}%"))
+        Participants.admin_id == admin_id,
+        ((Participants.name.ilike(f"%{query}%")) |
+         (Participants.activity_name.ilike(f"%{query}%")))
     ).all()
 
-    # Convert results to JSON format
     results = [{
         "id": p.id,
         "name": p.name,
@@ -952,7 +1274,8 @@ def search_participant():
 
 @app.route('/thank-you')
 def thank_you():
-    return render_template('thankyou.html')
+    admin_id = request.args.get('admin_id') or session.get('admin_id')
+    return render_template('thankyou.html', admin_id=admin_id)
 
 # Run App
 if __name__ == '__main__':

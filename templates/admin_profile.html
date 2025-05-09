@@ -20,33 +20,37 @@
 
 <body>  
     <div class="page d-flex">
-        <div class="sidebar bg-white p-20 p-relative">
+        <div class="sidebar bg-white p-20 p-relative">   
             <ul>
                 <li>
-                    <a href="{{ url_for('admin_dashboard') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
-                        <i class="fas fa-tachometer-alt fa-fw"></i>
-                        <span>Dashboard</span>
-                    </a>
+                    <a href="{{ url_for('admin_dashboard', year=request.args.get('year'), month=request.args.get('month')) }}"
+                        class="d-flex align-items-center font-14 p-10 rad-6 color-black {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+                            <i class="fa-solid fa-house"></i>
+                            <span>Dashboard</span>
+                        </a>
                 </li>
                 <li>
-                    <a href="{{ url_for('admin_list') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
-                        <i class="fa-solid fa-people-group"></i>
-                        <span>Activity</span>
-                    </a>
+                    <a href="{{ url_for('admin_list', year=request.args.get('year'), month=request.args.get('month')) }}"
+                        class="d-flex align-items-center font-14 p-10 rad-6 color-black {% if request.endpoint == 'admin_list' %}active{% endif %}">
+                            <i class="fa-solid fa-people-group"></i>
+                            <span>Activity</span>
+                        </a>
                 </li>
                
                 <li>
-                    <a href="{{ url_for('admin_results')}}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
-                        <i class="fa-solid fa-square-poll-vertical"></i>
-                        <span>Results</span>
+                    <a href="{{ url_for('admin_results', year=request.args.get('year'), month=request.args.get('month')) }}"
+                        class="d-flex align-items-center font-14 p-10 rad-6 color-black {% if request.endpoint == 'admin_results' %}active{% endif %}">
+                            <i class="fa-solid fa-square-poll-vertical"></i>
+                            <span>Results</span>
+                        </a>
+                </li>
+
+                <li>
+                    <a href="{{ url_for('admin_logout') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
+                        <i class="fas fa-sign-out-alt fa-fw"></i>
+                        <span>Logout</span>
                     </a>
                 </li>
-                <li>
-                    <a href="{{ url_for('admin_settings') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
-                        <i class="fa fa-gears"></i>
-                        <span>Settings</span>
-                    </a>
-                </li>     
                 
             </ul>
         </div>
@@ -66,72 +70,57 @@
             
                     <!-- User Info -->
                     <div class="user-info d-flex align-items-center">
-                        <div class="user-img" id="userDropdownToggle">
-                            <img src="{{ admin.profile_image if admin.profile_image else '/static/images/user.png' }}" alt="User">
+                        <div class="user-img">
+                            <a href="{{ url_for('admin_profile') }}"> <img src="{{ admin.profile_image if admin.profile_image else '/static/images/user.png' }}" alt="User">
+                            </a>
                         </div>
                     </div>
-                    
-                    <!-- Dropdown Menu -->
-                    <div id="userDropdown" class="dropdown-menu">
-                        <ul>
-                            <li>
-                                <a href="{{ url_for('admin_profile') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
-                                    <i class="fas fa-user fa-fw"></i>
-                                    <span>Profile</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ url_for('admin_logout') }}" class="d-flex align-items-center font-14 p-10 rad-6 color-black">
-                                    <i class="fas fa-sign-out-alt fa-fw"></i>
-                                    <span>Logout</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-
+                
                 </div>
             </div>
             
             <!-- End Header -->
 
             <!-- Start Profile -->
-            <h1 class="p-relative">Profile</h1>
-            <div class="container">
-                <div class="overview bg-white rad-10">
-                    <div class="d-flex">
-                    <div class="profile-info text-center">
-                        <div class="intro">
-                            <img class="rad-half mb-10 mt-10" src="{{ admin.profile_image}}" alt="User">
-                        </div>
-                        <div class="info">
-                        <h3 class="m-0" id="profile-username">{{ admin.username }}</h3>
-                        <p class="border-line"></p>
-                    
-                        <h4>General Information</h4>
-                        <div class="profile-details">
-                            <div class="detail-row">
-                                <span class="label" ><i class="fa-solid fa-circle-user"></i></span>
-                                <span class="value" id="profile-fullname">{{ admin.fullname }}</span>
+            <h1 class="p-relative">General Information</h1>
+            <div class="container"> 
+                <div class="profile-container">
+                    <div class="overview bg-white rad-10">
+                        <div class="d-flex">
+                        <div class="profile-info text-center">
+                            <div class="intro">
+                                <img class="rad-half mb-10 mt-10" src="{{ admin.profile_image}}" alt="User">
                             </div>
-                            <div class="detail-row">
-                                <span class="label"><i class="fa-solid fa-envelope"></i></span>
-                                <span class="value" id="profile-email">{{ admin.email }}</span>
+                            <div class="info">
+                            <h2 class="m-0" id="profile-username">{{ admin.username }}</h2>
+                            <p class="border-line"></p>
+                        
+                            <h4 class="mt-5 mb-5">General Information</h4>
+                            <div class="profile-details">
+                                <div class="detail-row">
+                                    <span class="label" ><i class="fa-solid fa-circle-user"></i></span>
+                                    <span class="value" id="profile-fullname">{{ admin.fullname }}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="label"><i class="fa-solid fa-envelope"></i></span>
+                                    <span class="value" id="profile-email">{{ admin.email }}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="label"><i class="fa-solid fa-phone"></i></span>
+                                    <span class="value" id="profile-phone">{{ admin.phone }}</span>
+                                </div>
                             </div>
-                            <div class="detail-row">
-                                <span class="label"><i class="fa-solid fa-phone"></i></span>
-                                <span class="value" id="profile-phone">{{ admin.phone }}</span>
+                        
+                            <button id="edit-btn">Edit Profile</button></div>
                             </div>
-                        </div>
-                    
-                        <button id="edit-btn">Edit Profile</button></div>
                         </div>
                     </div>
-                </div>
 
-                <div class="overview-info bg-white m-0 ml-20 p-20 rad-10" id="edit-form-container" style="display: none;">
-                    <div class="info-box mt-0 flex-1">
-                        <div class="box p-20 d-flex align-items-center flex-wrap">
-                            <h4 class="color-black font-15 m-0 mb-10 w-full">Edit Profile</h4>
+                    <!-- Edit Profile Modal -->
+                    <div id="editProfileModal" class="modal-editprofile" style="display: none;">
+                        <div class="modal-content-editprofile">
+                            <span class="close-btn-editprofile" id="closeEditModal">&times;</span>
+                            <h2>Edit Profile</h2>
                             <div class="edit-form">
                                 <form method="POST" action="{{ url_for('edit_admin_profile') }}" enctype="multipart/form-data">
                                     <label for="username">Username:</label>
@@ -149,82 +138,248 @@
                                     <label for="profile_picture">Profile Picture:</label>
                                     <input type="file" name="profile_picture" id="profile_picture" accept="image/*">                                
             
-                                    <button type="submit">Save Changes</button>
-                                    <button type="button" id="cancel-btn">Cancel</button>
+                                    <button type="button" id="saveChangesBtn">Save Changes</button>
+                                    <button type="button" id="cancelEditBtn">Cancel</button>
                                 </form>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div id="flash-message" class="flash-message">
-                {% for category, message in messages %}
-                    <p class="{{ category }}">{{ message }}</p>
-                {% endfor %}
-                </div>
-            {% endif %}
-            {% endwith %}     
-            <!-- End Profile -->
+                
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div id="flash-message" class="flash-message">
+                    {% for category, message in messages %}
+                        <p class="{{ category }}">{{ message }}</p>
+                    {% endfor %}
+                    </div>
+                {% endif %}
+                {% endwith %}     
+                <!-- End Profile -->
 
-            <script>
-                document.addEventListener("DOMContentLoaded", function () {
-                    const form = document.querySelector(".edit-form form");
-                    const editFormContainer = document.getElementById("edit-form-container");
-                    const editBtn = document.getElementById("edit-btn");
-                    const cancelBtn = document.getElementById("cancel-btn");
-                    const container = document.querySelector(".container"); // Select main container
+                <div class="settings-container ">
+                    <div class="setting-info m-00" style="display: flex; flex-direction: row; gap: 10px;">
+
+                        <!-- Start Security Info Section -->
+                        <div class="security-info mt-0">
+                            <h2 class="mt-0 mb-5">Security Info</h2>
+                            <p class="border-line"></p>
+                            <span class="mt-0 mb-20 font-15 color-grey d-block">Security Information About Your Account</span>
+                            <div class="between-flex m-0 pb-10">
+                                <div>
+                                    <p class="mb-5 mt-0 font-13">Password</p>
+                                    <span class="font-13 color-grey ml-10">
+                                        Last Changed: {{ admin.password_updated_at.strftime('%m/%d/%Y') if admin.password_updated_at else 'N/A' }}
+                                    </span>
+                                </div>
+                                <button id="changePasswordBtn" class="btn bg-blue color-white" style="cursor: pointer; border:0;">Change</button>
+                            </div>
+
+                            <!-- Login Activity Section -->
+                            <div class="login-activity m-0">
+                                <p class="mb-10">Recent Login Activity</p>
+                                <div class="scrollable-activity m-0">
+                                    <ul class="font-13 color-grey">
+                                        {% if recent_logins %}
+                                            <li class="login-item extra-login pl-10">
+                                                 {{ recent_logins[0].timestamp.strftime('%b %d, %Y %I:%M %p') }}
+                                            </li>
+                                        {% else %}
+                                            <li>No login activity found.</li>
+                                        {% endif %}
+                                    </ul>
+                                    <button id="showAllLoginsBtn" class="btn bg-blue color-white" style="cursor: pointer; border:0;">Show All Activity</button>
+                                </div>
+                            </div>
+                                                    
+                            <!-- Modal for showing all login activity -->
+                            <div id="loginActivityModal" class="modal">
+                                <div class="modal-content">
+                                    <span id="closeLoginModal" class="close">&times;</span>
+                                        <h3 style="margin-left:20px;">All Login Activity</h3>
+                                        <div class="login_border mb-20"></div>
+                                        <ul class="font-14 color-grey">
+                                            {% for login in all_logins %}
+                                                <li class="login pb-8">
+                                                    {{ login.timestamp.strftime('%b %d, %Y %I:%M %p') }}
+                                                </li>
+                                            {% else %}
+                                                <li>No login activity found.</li>
+                                            {% endfor %} 
+                                        </ul>
+                                </div>
+                            </div>
+                        </div>               
+                        <!-- End Security Info -->
+                    
+                        <!-- Password Change Modal -->
+                        <div id="passwordChangeModal" class="modal" style="display: none;">
+                            <div class="modal-content">
+                                <span class="close-btn" id="closeModal">&times;</span>
+                                <h2>Change Password</h2>
+                                <form id="changePasswordForm" class="mb-60 p-10">
+                                    <div class="form-group">
+                                        <label>Old Password</label>
+                                        <input type="password" name="old_password" class="form-control" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>New Password</label>
+                                        <input type="password" name="new_password" class="form-control" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Confirm New Password</label>
+                                        <input type="password" name="confirm_password" class="form-control" required>
+                                    </div>
+                                    <div class="button-group">
+                                        <button type="submit" class="btn bg-blue color-white" style="border-radius: 10px;">Update Password</button>
+                                        <button type="button" id="cancelChangeBtn" class="btn bg-grey color-black" style="border-radius: 10px;">Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        <!-- End Password Change Modal -->
+                    </div>
+                </div>
+                <!-- End Main Settings Container -->
+            </div>
+         
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const changePasswordBtn = document.getElementById("changePasswordBtn");
+                const passwordChangeModal = document.getElementById("passwordChangeModal");
+                const closeModal = document.getElementById("closeModal");
+                const cancelChangeBtn = document.getElementById("cancelChangeBtn");
             
-                    // Show Edit Form and Adjust Width
-                    editBtn.addEventListener("click", function () {
-                        editFormContainer.style.display = "block";  // Show form
-                        container.classList.add("edit-mode");  // Add class to resize container
-                        editBtn.style.display = "none";  // Hide edit button
-                    });
+                // Ensure modal is hidden on page load
+                passwordChangeModal.style.display = "none";
             
-                    // Hide Edit Form and Reset Width
-                    cancelBtn.addEventListener("click", function () {
-                        editFormContainer.style.display = "none";  // Hide form
-                        container.classList.remove("edit-mode");  // Reset container width
-                        editBtn.style.display = "block";  // Show edit button
-                        form.reset();  // Reset input fields
-                    });
-            
-                    // Handle Form Submission via AJAX
-                    form.addEventListener("submit", function (event) {
-                        event.preventDefault();  // Prevent page reload
-            
-                        const formData = new FormData(form);
-            
-                        fetch("{{ url_for('edit_admin_profile') }}", {
-                            method: "POST",
-                            body: formData
-                        })
-                        .then(response => response.json()) 
-                        .then(data => {
-                            if (data.success) {
-                                // Update Profile Display After Save
-                                document.getElementById("profile-username").innerText = formData.get("username");
-                                document.getElementById("profile-fullname").innerText = formData.get("fullname");
-                                document.getElementById("profile-email").innerText = formData.get("email");
-                                document.getElementById("profile-phone").innerText = formData.get("phone");
-            
-                                // Show success message
-                                alert("Profile updated successfully!");
-            
-                                // Hide form & reset fields
-                                editFormContainer.style.display = "none";
-                                container.classList.remove("edit-mode");  // Reset width
-                                editBtn.style.display = "block";
-                            } else {
-                                alert("Error updating profile: " + data.message);
-                            }
-                        })
-                        .catch(error => console.error("Error:", error));
-                    });
+                // Show modal when clicking "Change Password" button
+                changePasswordBtn.addEventListener("click", function () {
+                    passwordChangeModal.style.display = "flex"; // Only show when button is clicked
                 });
+            
+                // Hide modal when clicking "Cancel" or close button
+                function closeModalFunc() {
+                    passwordChangeModal.style.display = "none";
+                }
+            
+                closeModal.addEventListener("click", closeModalFunc);
+                cancelChangeBtn.addEventListener("click", closeModalFunc);
+            
+                // Hide modal when clicking outside the modal-content
+                window.addEventListener("click", function (event) {
+                    if (event.target === passwordChangeModal) {
+                        closeModalFunc();
+                    }
+                });
+            
+                // Handle password change via AJAX
+                document.getElementById("changePasswordForm").addEventListener("submit", async function (event) {
+                    event.preventDefault();
+            
+                    let formData = new FormData(this);
+            
+                    try {
+                        let response = await fetch("{{ url_for('change_password_ajax') }}", {
+                            method: "POST",
+                            body: formData,
+                            credentials: 'include'
+                        });
+            
+                        let result = await response.json();
+            
+                        if (result.success) {
+                            alert("Password updated successfully!");
+                            closeModalFunc();
+                        } else {
+                            alert("Error: " + result.message);
+                        }
+                    } catch (error) {
+                        console.error("Error updating password:", error);
+                    }
+                });
+            });
+        </script>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const modal = document.getElementById("loginActivityModal");
+                const btn = document.getElementById("showAllLoginsBtn");
+                const span = document.getElementById("closeLoginModal");
+            
+                btn.onclick = function () {
+                    modal.style.display = "block";
+                }
+            
+                span.onclick = function () {
+                    modal.style.display = "none";
+                }
+            
+                window.onclick = function (event) {
+                    if (event.target == modal) {
+                        modal.style.display = "none";
+                    }
+                }
+            });
+        </script>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const editBtn = document.getElementById("edit-btn");
+                const modal = document.getElementById("editProfileModal");
+                const closeBtn = document.getElementById("closeEditModal");
+                const cancelBtn = document.getElementById("cancelEditBtn");
+                const form = modal.querySelector("form");
+            
+                // Show modal
+                editBtn.addEventListener("click", function () {
+                    modal.style.display = "flex";
+                });
+            
+                // Hide modal
+                function closeEditModal() {
+                    modal.style.display = "none";
+                    form.reset(); // optional
+                }
+            
+                closeBtn.addEventListener("click", closeEditModal);
+                cancelBtn.addEventListener("click", closeEditModal);
+                window.addEventListener("click", function (event) {
+                    if (event.target === modal) {
+                        closeEditModal();
+                    }
+                });
+            
+                // AJAX submission
+                document.getElementById("saveChangesBtn").addEventListener("click", function () {
+                    const formData = new FormData(form);
+                
+                    fetch("{{ url_for('edit_admin_profile') }}", {
+                        method: "POST",
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.getElementById("profile-username").innerText = formData.get("username");
+                            document.getElementById("profile-fullname").innerText = formData.get("fullname");
+                            document.getElementById("profile-email").innerText = formData.get("email");
+                            document.getElementById("profile-phone").innerText = formData.get("phone");
+                        
+                            if (data.profile_picture) {
+                                document.querySelector(".intro img").src = data.profile_picture;
+                            }
+                        
+                            alert("Profile updated successfully!");
+                            closeEditModal();
+                        } else {
+                            alert("Error updating profile: " + data.message);
+                        }
+                    })
+                    .catch(error => console.error("Error:", error));
+                });
+            });
             </script>
 
         <script>
@@ -253,26 +408,6 @@
             });
         </script>
 
-
-        <script>
-            document.addEventListener("DOMContentLoaded", function () {
-                const userDropdownToggle = document.getElementById("userDropdownToggle");
-                const userDropdown = document.getElementById("userDropdown");
-            
-                userDropdownToggle.addEventListener("click", function (event) {
-                    event.stopPropagation();
-                    userDropdown.classList.toggle("show");
-                });
-            
-                // Close dropdown if clicking outside
-                document.addEventListener("click", function (event) {
-                    if (!userDropdown.contains(event.target) && !userDropdownToggle.contains(event.target)) {
-                        userDropdown.classList.remove("show");
-                    }
-                });
-            });
-            
-        </script>
         <script>
             document.getElementById("searchInput").addEventListener("input", async function () {
             let query = this.value.trim();
@@ -316,6 +451,6 @@
             }
         });  
     </script>
-</body>
 
+</body>
 </html>

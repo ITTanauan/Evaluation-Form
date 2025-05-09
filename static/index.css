@@ -88,9 +88,22 @@ p {
     transform: scale(1.02);
 }
 
+/* For Tablets: 481px to 1024px */
+@media (min-width: 481px) and (max-width: 1024px) {
+    .container {
+        width: 100%;
+        padding: 60px;
+    }
+    .logolarger {
+        width: 20vh; /* Adjust as needed */
+        height: auto;
+        margin: 20px auto;
+        display: block;
+    }
+}
 
-/* Responsive Design */
-@media (max-width: 460px) {
+/* For Mobile Phones: up to 480px */
+@media (max-width: 480px) {
     .container {
         width: 80%;
         padding: 30px;
